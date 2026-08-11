@@ -1,15 +1,17 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using QiDian.Models;
 using QiDian.Services;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace QiDian
 {
-    public partial class SearchWindow : Window
+    public partial class SearchWindow : Window,IViewFor<SearchViewModel>
     {
         private SearchViewModel _viewModel;
         private readonly IWindowSwitcherService _windowSwitcher;
@@ -17,13 +19,29 @@ namespace QiDian
         public SearchWindow(IWindowSwitcherService windowSwitcher)
         {
             InitializeComponent();
-            // 初始化 ViewModel
-            _viewModel = new SearchViewModel();
-            ResultsListBox.ItemsSource = _viewModel.SearchResults;
-            SearchTextBox.TextChanged += SearchTextBox_TextChanged;
+            // 初始化 ViewModel（同时赋给 ViewModel 依赖属性，触发 DataContext 自动配置）
+            ViewModel = _viewModel = new SearchViewModel();
 
-            // 搜索结果变更时同步更新可见性
-            _viewModel.SearchResults.CollectionChanged += (s, e) => UpdateResultsVisibility();
+            this.WhenActivated(d =>
+            {
+                this.Bind(ViewModel, vm => vm.SearchKeyword, v => v.SearchTextBox.Text).DisposeWith(d);
+                this.OneWayBind(ViewModel, vm => vm.Results, v => v.ResultsListBox.ItemsSource).DisposeWith(d);
+                // 绑定选中项，彻底抛弃SelectionChanged后台事件
+                this.Bind(ViewModel, vm => vm.SelectedFile, v => v.ResultsListBox.SelectedItem)
+                    .DisposeWith(d);
+
+                this.WhenAnyValue(x => x.ViewModel!.Results)
+                    .Select(results => results?.Any() == true ? Visibility.Visible : Visibility.Collapsed)
+                    .BindTo(this, x => x.ResultsListBox.Visibility)
+                    .DisposeWith(d);
+
+                this.WhenAnyValue(x => x.ViewModel!.Results)
+                    .Select(results => results?.Any() == true ? Visibility.Collapsed : Visibility.Visible)
+                    .BindTo(this, x => x.EmptyStateBorder.Visibility)
+                    .DisposeWith(d);
+            });
+
+
 
             // 使窗口可拖动
             MouseLeftButtonDown += (s, e) => DragMove();
@@ -37,9 +55,6 @@ namespace QiDian
             SearchTextBox.SelectAll();
         }
 
-        /// <summary>
-        /// 窗口失活（点击界面外部）时自动隐藏
-        /// </summary>
         private void SearchWindow_Deactivated(object sender, EventArgs e)
         {
             // 延迟隐藏，避免因点击窗口内部控件触发 Deactivated 导致误关
@@ -53,22 +68,7 @@ namespace QiDian
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
-        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            // 更新 ViewModel 的搜索关键词
-            _viewModel.SearchKeyword = SearchTextBox.Text;
-
-            // 根据搜索词和结果数量控制界面显示
-            UpdateResultsVisibility();
-
-            // 如果有结果，自动选择第一个
-            if (_viewModel.SearchResults.Count > 0 && ResultsListBox.SelectedIndex == -1)
-            {
-                ResultsListBox.SelectedIndex = 0;
-            }
-        }
-
-        /// <summary>
+        // <summary>
         /// 控制结果列表和空状态的可见性
         /// </summary>
         private void UpdateResultsVisibility()
@@ -80,7 +80,7 @@ namespace QiDian
                 // 没有搜索词 → 隐藏所有结果区域
                 ResultsListBox.Visibility = Visibility.Collapsed;
             }
-            else if (_viewModel.SearchResults.Count > 0)
+            else if (_viewModel.Results.Count() > 0)
             {
                 // 有搜索词且有结果 → 显示结果列表
                 ResultsListBox.Visibility = Visibility.Visible;
@@ -119,10 +119,10 @@ namespace QiDian
             {
                 case Key.Down:
                     // 向下移动选择
-                    if (_viewModel.SearchResults.Count > 0)
+                    if (_viewModel.Results.Count() > 0)
                     {
                         int nextIndex = ResultsListBox.SelectedIndex + 1;
-                        if (nextIndex < _viewModel.SearchResults.Count)
+                        if (nextIndex < _viewModel.Results.Count())
                         {
                             ResultsListBox.SelectedIndex = nextIndex;
                             ResultsListBox.ScrollIntoView(ResultsListBox.SelectedItem);
@@ -133,7 +133,7 @@ namespace QiDian
 
                 case Key.Up:
                     // 向上移动选择
-                    if (_viewModel.SearchResults.Count > 0)
+                    if (_viewModel.Results.Count() > 0)
                     {
                         int prevIndex = ResultsListBox.SelectedIndex - 1;
                         if (prevIndex >= 0)
@@ -177,5 +177,29 @@ namespace QiDian
             var switcher = serviceProvider.GetRequiredService<IWindowSwitcherService>();
             switcher.SwitchToNavWindow();
         }
+
+        #region ViewModel
+
+        public SearchViewModel? ViewModel
+        {
+            get => (SearchViewModel?)GetValue(ViewModelProperty);
+            set => SetValue(ViewModelProperty, value);
+        }
+
+        object? IViewFor.ViewModel
+        {
+            get => ViewModel;
+            set => ViewModel = (SearchViewModel?)value;
+        }
+
+        public static readonly DependencyProperty ViewModelProperty =
+            DependencyProperty.Register("ViewModel", typeof(SearchViewModel), typeof(SearchWindow),
+                new PropertyMetadata(null, (d, e) =>
+                {
+                    if (d is SearchWindow view)
+                        view.DataContext = e.NewValue;
+                }));
+
+        #endregion
     }
 }
