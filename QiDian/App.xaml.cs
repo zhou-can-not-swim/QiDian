@@ -85,7 +85,7 @@ namespace QiDian
 
         public void ShowMainWindow(object sender, RoutedEventArgs e)
         {
-            var mainWindow = _host.Services.GetRequiredService<NavWindow>();
+            var mainWindow = _host.Services.GetRequiredService<SearchWindow>();
 
             if (mainWindow != null)
             {
