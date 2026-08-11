@@ -1,10 +1,14 @@
-﻿using ReactiveUI;
+﻿using QiDian.Models;
+using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using System;
+using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reactive;
+using System.Reactive.Linq;
 using System.Windows;
-using QiDian.Models;
+using System.Reactive.Concurrency;
 
 namespace QiDian
 {
@@ -13,24 +17,23 @@ namespace QiDian
         private readonly EverythingSearchService _everything = new();
         private CancellationTokenSource? _searchCts;
         private System.Timers.Timer? _searchTimer;
-        private string _searchKeyword = "";
-
-        // 属性
-        public string SearchKeyword
-        {
-            get => _searchKeyword;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _searchKeyword, value);
-                ScheduleSearch();
-            }
-        }
 
         [Reactive]
-        public ObservableCollection<FileEntry> SearchResults { get; set; } = new();
+        public string SearchKeyword { get; set; } = "";
 
         [Reactive]
-        public string StatusText { get; set; } = "就绪";
+        public ObservableCollection<FileEntry> Results { get; set; } = new();
+
+        /// <summary>是否已执行过搜索（区分「未搜索」与「搜索无结果」两种界面状态）</summary>
+        [Reactive]
+        public bool HasSearched { get; set; }
+
+        /// <summary>是否有搜索正在进行（搜索期间不显示"未找到"，避免闪烁）</summary>
+        [Reactive]
+        public bool IsSearching { get; set; }
+
+        [Reactive]
+        public string StatusText { get; set; } = "";//keyword
 
         [Reactive]
         public string EngineBadge { get; set; } = "";
@@ -52,19 +55,38 @@ namespace QiDian
             CopyPathCommand = ReactiveCommand.Create(CopySelectedPath);
             RunAsAdminCommand = ReactiveCommand.Create(RunSelectedAsAdmin);
 
-            if (EverythingSearchService.IsAvailable())
-            {
-                EngineBadge = "Everything";
-                StatusText = "Everything 引擎就绪，输入即搜";
-            }
-            else
-            {
-                EngineBadge = "Everything 不可用";
-                StatusText = "请安装并运行 Everything";
-            }
+            EngineBadge = EverythingSearchService.IsAvailable() ? "Everything" : "Everything 不可用";
+            StatusText = EverythingSearchService.IsAvailable() ? "Everything 引擎就绪，输入即搜" : "请安装并运行 Everything";
+
+            this.WhenAnyValue(x => x.SearchKeyword)
+               .Throttle(TimeSpan.FromMilliseconds(300))
+               .ObserveOn(RxApp.TaskpoolScheduler)
+               .Subscribe(ScheduleSearch);
+
+            // 关键词一变非空就立即标记"搜索中"，避免上一轮"未找到"在等待搜索期间闪现
+            this.WhenAnyValue(x => x.SearchKeyword)
+               .Select(kw => !string.IsNullOrWhiteSpace(kw))
+               .ObserveOn(RxApp.MainThreadScheduler)
+               .Subscribe(searching => IsSearching = searching);
         }
 
-        private void ScheduleSearch()
+        /// <summary>
+        /// 重置到初始状态（窗口每次打开时调用）：只显示搜索栏，不显示结果列表/空状态。
+        /// </summary>
+        public void Reset()
+        {
+            _searchCts?.Cancel();
+            _searchTimer?.Stop();
+            SearchKeyword = "";
+            Results = new ObservableCollection<FileEntry>();
+            HasSearched = false;
+            IsSearching = false;
+            StatusText = EverythingSearchService.IsAvailable()
+                ? "Everything 引擎就绪，输入即搜"
+                : "请安装并运行 Everything";
+        }
+
+        private void ScheduleSearch(string obj)
         {
             _searchTimer?.Stop();
             _searchTimer?.Dispose();
@@ -80,15 +102,22 @@ namespace QiDian
             _searchCts?.Dispose();
             _searchCts = new CancellationTokenSource();
             var token = _searchCts.Token;
-            var keyword = _searchKeyword;
+            var keyword = SearchKeyword;
 
             if (string.IsNullOrWhiteSpace(keyword))
             {
-                SearchResults.Clear();
-                StatusText = "⚡ Everything 就绪，输入即搜";
+                RxApp.MainThreadScheduler.Schedule(() =>
+                {
+                    Results = new ObservableCollection<FileEntry>();
+                    HasSearched = false;
+                    IsSearching = false;
+                    StatusText = "⚡ Everything 就绪，输入即搜";
+                });
                 return;
+
             }
 
+            IsSearching = true;
             try
             {
                 var sw = Stopwatch.StartNew();
@@ -97,17 +126,23 @@ namespace QiDian
 
                 if (!token.IsCancellationRequested)
                 {
-                    SearchResults.Clear();
-                    foreach (var item in results)
+                    RxApp.MainThreadScheduler?.Schedule(() =>
                     {
-                        SearchResults.Add(item);
-                    }
-                    StatusText = $"找到 {results.Count} 个结果 ({sw.ElapsedMilliseconds} ms)";
+                        Results = new ObservableCollection<FileEntry>(results);
+                        HasSearched = true;
+                        IsSearching = false;
+                        StatusText = $"找到 {results.Count} 个结果 ({sw.ElapsedMilliseconds} ms)";
+                    });
+
                 }
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                IsSearching = false;
+            }
             catch (Exception ex)
             {
+                IsSearching = false;
                 StatusText = $"搜索出错: {ex.Message}";
             }
         }
