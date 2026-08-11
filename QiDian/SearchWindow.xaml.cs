@@ -30,13 +30,18 @@ namespace QiDian
                 this.Bind(ViewModel, vm => vm.SelectedFile, v => v.ResultsListBox.SelectedItem)
                     .DisposeWith(d);
 
+                // 有结果就显示结果列表（搜索期间保留已有结果，避免列表闪烁）
                 this.WhenAnyValue(x => x.ViewModel!.Results)
                     .Select(results => results?.Any() == true ? Visibility.Visible : Visibility.Collapsed)
                     .BindTo(this, x => x.ResultsListBox.Visibility)
                     .DisposeWith(d);
 
-                this.WhenAnyValue(x => x.ViewModel!.Results)
-                    .Select(results => results?.Any() == true ? Visibility.Collapsed : Visibility.Visible)
+                // 仅「已搜索、无搜索在进行、且无结果」时显示空状态提示
+                this.WhenAnyValue(x => x.ViewModel!.HasSearched, x => x.ViewModel!.IsSearching,
+                        x => x.ViewModel!.Results,
+                        (hasSearched, isSearching, results) =>
+                            hasSearched && !isSearching && results?.Any() != true
+                                ? Visibility.Visible : Visibility.Collapsed)
                     .BindTo(this, x => x.EmptyStateBorder.Visibility)
                     .DisposeWith(d);
             });
@@ -51,6 +56,8 @@ namespace QiDian
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
+            // 每次打开窗口都重置为「只显示搜索栏」的初始状态
+            _viewModel.Reset();
             SearchTextBox.Focus();
             SearchTextBox.SelectAll();
         }
@@ -66,30 +73,6 @@ namespace QiDian
                     ShowInTaskbar = false;
                 }
             }), System.Windows.Threading.DispatcherPriority.Background);
-        }
-
-        // <summary>
-        /// 控制结果列表和空状态的可见性
-        /// </summary>
-        private void UpdateResultsVisibility()
-        {
-            bool hasKeyword = !string.IsNullOrWhiteSpace(SearchTextBox.Text);
-
-            if (!hasKeyword)
-            {
-                // 没有搜索词 → 隐藏所有结果区域
-                ResultsListBox.Visibility = Visibility.Collapsed;
-            }
-            else if (_viewModel.Results.Count() > 0)
-            {
-                // 有搜索词且有结果 → 显示结果列表
-                ResultsListBox.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                // 有搜索词但无结果 → 显示空状态提示
-                ResultsListBox.Visibility = Visibility.Collapsed;
-            }
         }
 
         private void ResultsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
