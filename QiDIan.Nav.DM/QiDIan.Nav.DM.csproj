@@ -15,6 +15,15 @@
     <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
   </ItemGroup>
 
+	<!--爬虫相关库-->
+	<ItemGroup>
+		<PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+		<PackageReference Include="Microsoft.Playwright" Version="1.61.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+	</ItemGroup>
+
   <!-- 构建后把插件 DLL+PDB 复制到主程序 Navs 文件夹（开发/发布走同一条动态加载路径） -->
   <Target Name="CopyToNavs" AfterTargets="Build">
     <PropertyGroup>

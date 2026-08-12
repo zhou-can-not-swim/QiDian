@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using QiDian.Contracts;
 using QiDian.Services;
 using QiDian.ViewModels;
+using Zhou.CrawlerAdapter.DependencyInjection;
 
 namespace QiDian
 {
@@ -30,6 +31,9 @@ namespace QiDian
                 {
                     ConfigureServices(services);
 
+                    //第三方自定义库
+                    ConfigureThirdpartyServices(services);
+
                     // 注册插件：模块单例 + View/ViewModel 瞬态
                     foreach (var m in modules)
                     {
@@ -39,7 +43,6 @@ namespace QiDian
                     }
                 })
                 .Build();
-
             AppServiceLocator.Initialize(_host.Services);
 
             // 把插件页面写入静态注册表（ViewKey → View/ViewModel 映射）
@@ -153,6 +156,15 @@ namespace QiDian
 
             // --- ViewModels（Transient）---
             services.AddTransient<NavViewModel>();
+        }
+
+        // --- 第三方自定义库 ---
+        private static void ConfigureThirdpartyServices(IServiceCollection services)
+        {
+            services.AddCrawlerAdapter(options =>
+            {
+                options.Headless = true;
+            });
         }
 
         protected override async void OnExit(ExitEventArgs e)
