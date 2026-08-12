@@ -1,4 +1,4 @@
-<UserControl x:Class="QiDian.Views.HomeView"
+<UserControl x:Class="QiDian.Nav.Home.HomeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Margin="24">
@@ -9,13 +9,13 @@
                        HorizontalAlignment="Center"
                        Foreground="{DynamicResource TextPrimaryBrush}"
                        Margin="0,0,0,12"/>
-            <TextBlock Text="这是首页，通过 AutoWire 自动绑定 HomeViewModel"
+            <TextBlock Text="这是插件化的首页，由 QiDian.Nav.Home 类库自动加载"
                        FontSize="14"
                        Foreground="{DynamicResource TextSecondaryBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,12"/>
             <Border Background="{DynamicResource SuccessBgBrush}" CornerRadius="8" Padding="16,10">
-                <TextBlock Text="{Binding DbStatus}"
+                <TextBlock Text="{Binding StatusMessage}"
                            FontSize="13"
                            Foreground="{DynamicResource SuccessBrush}"
                            HorizontalAlignment="Center"/>
