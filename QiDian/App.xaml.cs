@@ -53,6 +53,10 @@ namespace QiDian
             var mainWindow = _host.Services.GetRequiredService<SearchWindow>();
             mainWindow.Show();
 
+            // 初始化全局热键服务（切换窗口 / 隐藏窗口）
+            var hotkeyService = _host.Services.GetRequiredService<IGlobalHotkeyService>();
+            hotkeyService.Initialize(mainWindow);
+
             DispatcherUnhandledException += (s, args) =>
             {
                 MessageBox.Show($"发生错误: {args.Exception.Message}", "错误",
@@ -141,6 +145,7 @@ namespace QiDian
             // --- 框架服务 ---
             services.AddSingleton<NavigationService>();
             services.AddSingleton<IWindowSwitcherService, WindowSwitcherService>();
+            services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
 
             // --- 窗口 ---
             services.AddSingleton<NavWindow>();
@@ -152,6 +157,9 @@ namespace QiDian
 
         protected override async void OnExit(ExitEventArgs e)
         {
+            var hotkeyService = _host.Services.GetService<IGlobalHotkeyService>();
+            hotkeyService?.UnregisterAll();
+
             await _host.StopAsync();
             _host.Dispose();
             base.OnExit(e);
