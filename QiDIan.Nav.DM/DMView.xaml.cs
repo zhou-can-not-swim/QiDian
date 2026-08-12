@@ -1,5 +1,6 @@
 using LibVLCSharp.Shared;
 using ReactiveUI;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
@@ -56,7 +57,7 @@ namespace QiDian.Nav.DM
             if (Dispatcher.CheckAccess())
                 action();
             else
-                Dispatcher.BeginInvoke(() => { if (!_disposed) action(); });
+                RxApp.MainThreadScheduler.Schedule(() => { if (!_disposed) action(); });
         }
 
         #region 生命周期
