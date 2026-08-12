@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using System.Globalization;
 using System.Windows.Data;
+using QiDian.Contracts;
 
 namespace QiDian.Common
 {

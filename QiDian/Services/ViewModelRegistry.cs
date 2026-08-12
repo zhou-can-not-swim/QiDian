@@ -1,4 +1,5 @@
 using System.Windows;
+using QiDian.Contracts;
 
 namespace QiDian.Services;
 
@@ -17,10 +18,19 @@ public static class ViewModelRegistry
     /// </summary>
     public static void Register<TView, TViewModel>(string viewKey)
         where TView : FrameworkElement
-        where TViewModel : Common.ViewModelBase
+        where TViewModel : ViewModelBase
     {
         _vmTypes[viewKey] = typeof(TViewModel);
         _viewTypes[viewKey] = typeof(TView);
+    }
+
+    /// <summary>
+    /// 注册一组 View ↔ ViewModel 映射（供插件动态加载时使用，类型在运行时才知道）
+    /// </summary>
+    public static void Register(string viewKey, Type viewType, Type vmType)
+    {
+        _vmTypes[viewKey] = vmType;
+        _viewTypes[viewKey] = viewType;
     }
     #endregion
 

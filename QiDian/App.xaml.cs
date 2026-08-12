@@ -1,13 +1,11 @@
 using Hardcodet.Wpf.TaskbarNotification;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Windows;
 using System.Windows.Controls;
-using QiDian.Data;
+using QiDian.Contracts;
 using QiDian.Services;
 using QiDian.ViewModels;
-using QiDian.Views;
 
 namespace QiDian
 {
@@ -23,24 +21,30 @@ namespace QiDian
         {
             base.OnStartup(e);
 
+            // 发现导航插件（在 IHost 构建前，以便把插件类型注册进 DI）
+            var pluginsDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Navs");
+            var modules = NavPluginLoader.LoadModules(pluginsDir);
+
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
                     ConfigureServices(services);
+
+                    // 注册插件：模块单例 + View/ViewModel 瞬态
+                    foreach (var m in modules)
+                    {
+                        services.AddSingleton<INavModule>(m);
+                        services.AddTransient(m.ViewType);
+                        services.AddTransient(m.ViewModelType);
+                    }
                 })
                 .Build();
 
             AppServiceLocator.Initialize(_host.Services);
 
-            // 注册 View ↔ ViewModel 映射
-            RegisterViewModels();
-
-            // 初始化数据库
-            using (var scope = _host.Services.CreateScope())
-            {
-                var initializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
-                await initializer.InitializeAsync();
-            }
+            // 把插件页面写入静态注册表（ViewKey → View/ViewModel 映射）
+            foreach (var m in modules)
+                ViewModelRegistry.Register(m.ViewKey, m.ViewType, m.ViewModelType);
 
             await _host.StartAsync();
 
@@ -134,14 +138,6 @@ namespace QiDian
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            // --- EF Core SQLite ---
-            var dbPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QiDian.db");
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite($"Data Source={dbPath}"),
-                ServiceLifetime.Scoped);
-
-            services.AddScoped<DbInitializer>();
-
             // --- 框架服务 ---
             services.AddSingleton<NavigationService>();
             services.AddSingleton<IWindowSwitcherService, WindowSwitcherService>();
@@ -152,15 +148,6 @@ namespace QiDian
 
             // --- ViewModels（Transient）---
             services.AddTransient<NavViewModel>();
-            services.AddTransient<HomeViewModel>();
-
-            // --- Views（Transient）---
-            services.AddTransient<HomeView>();
-        }
-
-        private static void RegisterViewModels()
-        {
-            ViewModelRegistry.Register<HomeView, HomeViewModel>("Home");
         }
 
         protected override async void OnExit(ExitEventArgs e)

@@ -1,8 +1,7 @@
 using ReactiveUI;
 
-namespace QiDian.Common
+namespace QiDian.Contracts
 {
-
     public abstract class ViewModelBase : ReactiveObject
     {
         /// <summary>
