@@ -1,25 +1,111 @@
 <UserControl x:Class="QiDian.Nav.DM.DMView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF">
+    <UserControl.Resources>
+        <!-- 剧集列表项样式 -->
+        <Style x:Key="EpisodeItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="6" Margin="2,2" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavSelectedBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Margin="24">
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <TextBlock Text="{Binding WelcomeText}"
-                       FontSize="28"
-                       FontWeight="Bold"
-                       HorizontalAlignment="Center"
-                       Foreground="{DynamicResource TextPrimaryBrush}"
-                       Margin="0,0,0,12"/>
-            <TextBlock Text="这是插件化的首页，由 QiDian.Nav.DM 类库自动加载"
-                       FontSize="14"
-                       Foreground="{DynamicResource TextSecondaryBrush}"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,12"/>
-            <Border Background="{DynamicResource SuccessBgBrush}" CornerRadius="8" Padding="16,10">
-                <TextBlock Text="{Binding StatusMessage}"
-                           FontSize="13"
-                           Foreground="{DynamicResource SuccessBrush}"
-                           HorizontalAlignment="Center"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 左侧：剧集列表 -->
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" CornerRadius="8"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="12">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="剧集列表" FontSize="16" FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" Margin="4,2,0,10"/>
+                <ListBox ItemsSource="{Binding Episodes}"
+                         SelectedItem="{Binding SelectedEpisode, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource EpisodeItemStyle}"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Title}"
+                                           FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{Binding ProgressText}"
+                                           FontSize="11" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- 右侧：播放器 -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 视频区 -->
+            <Border Grid.Row="0" Background="Black" CornerRadius="8" ClipToBounds="True">
+                <Grid>
+                    <vlc:VideoView x:Name="Player" Background="Black"/>
+                    <TextBlock x:Name="PlayerHint" Text="请选择左侧剧集开始播放"
+                               FontSize="18" Foreground="#888888"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
             </Border>
-        </StackPanel>
+
+            <!-- 控制区 -->
+            <Border Grid.Row="1" Margin="0,12,0,0" Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="16,12">
+                <StackPanel>
+                    <Slider x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0"
+                            IsMoveToPointEnabled="True"
+                            Foreground="{DynamicResource PrimaryBrush}"
+                            PreviewMouseLeftButtonDown="SeekSlider_PreviewMouseLeftButtonDown"
+                            PreviewMouseLeftButtonUp="SeekSlider_PreviewMouseLeftButtonUp"
+                            ValueChanged="SeekSlider_ValueChanged"/>
+                    <DockPanel Margin="0,8,0,0">
+                        <Button x:Name="PlayPauseButton" Content="▶ 播放" Click="PlayPauseButton_Click"
+                                Padding="18,8" Cursor="Hand" BorderThickness="0"
+                                Background="{DynamicResource PrimaryBrush}" Foreground="White"
+                                HorizontalAlignment="Left"/>
+                        <TextBlock Text="{Binding PositionText}"
+                                   FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    </DockPanel>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                               Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

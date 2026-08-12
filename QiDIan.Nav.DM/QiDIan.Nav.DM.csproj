@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <!-- 类库默认不把 NuGet 程序集复制到输出，开启后 LibVLCSharp 等托管依赖才会进 bin，进而复制进 Navs -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="LibVLCSharp.WPF" Version="3.10.1" />
     <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
   </ItemGroup>
 
 	<!--爬虫相关库-->
@@ -30,8 +34,26 @@
       <NavsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\QiDian\bin\$(Configuration)\net8.0-windows\Navs'))</NavsDir>
     </PropertyGroup>
     <MakeDir Directories="$(NavsDir)" />
+
+    <!-- 插件 DLL + PDB -->
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(NavsDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(NavsDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+
+    <!-- LibVLCSharp 托管依赖（主程序通过 NavPluginLoader 从 Navs 目录解析） -->
+    <Copy SourceFiles="$(TargetDir)LibVLCSharp.dll" DestinationFolder="$(NavsDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)LibVLCSharp.dll')" />
+    <Copy SourceFiles="$(TargetDir)LibVLCSharp.WPF.dll" DestinationFolder="$(NavsDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)LibVLCSharp.WPF.dll')" />
+
+    <!-- LibVLC 原生库（win-x64）：dll + plugins/hrtfs/lua 目录，随插件一起进 Navs -->
+    <ItemGroup>
+      <LibVlcNativeDll Include="$(TargetDir)libvlc\win-x64\libvlc.dll;$(TargetDir)libvlc\win-x64\libvlccore.dll" />
+      <LibVlcPlugins Include="$(TargetDir)libvlc\win-x64\plugins\**\*" />
+      <LibVlcHrtfs Include="$(TargetDir)libvlc\win-x64\hrtfs\**\*" />
+      <LibVlcLua Include="$(TargetDir)libvlc\win-x64\lua\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(LibVlcNativeDll)" DestinationFolder="$(NavsDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LibVlcPlugins)" DestinationFolder="$(NavsDir)\plugins\%(LibVlcPlugins.RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LibVlcHrtfs)" DestinationFolder="$(NavsDir)\hrtfs\%(LibVlcHrtfs.RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LibVlcLua)" DestinationFolder="$(NavsDir)\lua\%(LibVlcLua.RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
