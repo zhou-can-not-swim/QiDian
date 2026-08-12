@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiDian.Nav.Home", "QiDian.N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiDian.Nav.Settings", "QiDian.Nav.Settings\QiDian.Nav.Settings.csproj", "{875C5422-4752-47C1-A7A4-1535B54DA9D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiDian.Nav.DM", "QiDIan.Nav.DM\QiDian.Nav.DM.csproj", "{23DF79DB-DAF0-4486-957A-9384F537CBF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{875C5422-4752-47C1-A7A4-1535B54DA9D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{875C5422-4752-47C1-A7A4-1535B54DA9D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{875C5422-4752-47C1-A7A4-1535B54DA9D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23DF79DB-DAF0-4486-957A-9384F537CBF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23DF79DB-DAF0-4486-957A-9384F537CBF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23DF79DB-DAF0-4486-957A-9384F537CBF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23DF79DB-DAF0-4486-957A-9384F537CBF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

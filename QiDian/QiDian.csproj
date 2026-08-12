@@ -28,6 +28,7 @@
 		<!-- 只保证 F5 时插件先构建并触发 Navs 复制；不复制插件 DLL 到输出根、不产生编译耦合 -->
 		<ProjectReference Include="..\QiDian.Nav.Home\QiDian.Nav.Home.csproj" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\QiDian.Nav.Settings\QiDian.Nav.Settings.csproj" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\QiDian.Nav.Settings\QiDian.Nav.DM.csproj" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<ItemGroup>
