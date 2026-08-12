@@ -1,10 +1,9 @@
-using QiDian.ViewModels;
 using ReactiveUI;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace QiDian.Views
+namespace QiDian.Nav.Home
 {
     public partial class HomeView : UserControl, IViewFor<HomeViewModel>
     {
