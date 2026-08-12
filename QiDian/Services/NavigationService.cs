@@ -1,8 +1,6 @@
-using QiDian.Common;
-using QiDian.Data;
+using QiDian.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Windows.Controls;
 
 namespace QiDian.Services;
 
@@ -11,10 +9,8 @@ namespace QiDian.Services;
 /// </summary>
 public interface INavigationService
 {
-    Frame? MainFrame { get; set; }
     ViewModelBase? CurrentViewModel { get; }
-    void Navigate(Type viewType);
-    void NavigateTo(string viewKey);
+    Task NavigateTo(string viewKey);
     Task NavigateToAsync(string viewKey);
     event EventHandler<ViewModelBase?>? CurrentViewModelChanged;
 }
@@ -22,11 +18,7 @@ public interface INavigationService
 public class NavigationService : INavigationService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly Dictionary<string, Type> _viewModelMap = new();
     private ViewModelBase? _currentViewModel;
-
-    public Frame? MainFrame { get; set; }
-    private readonly AppDbContext _db;
 
     public ViewModelBase? CurrentViewModel
     {
@@ -40,51 +32,27 @@ public class NavigationService : INavigationService
 
     public event EventHandler<ViewModelBase?>? CurrentViewModelChanged;
 
-    public NavigationService(IServiceProvider serviceProvider, AppDbContext db)
+    public NavigationService(IServiceProvider serviceProvider)
     {
-        _db = db;
         _serviceProvider = serviceProvider;
-        InitializeViewModelMap();
     }
 
-    private void InitializeViewModelMap()
+    public async Task NavigateTo(string viewKey)
     {
-        // 动态注册所有 ViewModel 类型
-        _db.NavigationMenus.Where(m => m.IsEnabled).ToList().ForEach(m =>
-        {
-            var vmType = ViewModelRegistry.GetViewModelType(m.ViewKey);
-            if (vmType != null)
-                _viewModelMap[m.ViewKey] = vmType;
-        });
-    }
-
-    public void Navigate(Type viewType)
-    {
-        if (MainFrame == null) return;
-
-        var view = Activator.CreateInstance(viewType);
-        if (view != null)
-        {
-            MainFrame.Navigate(view);
-        }
-    }
-
-    public void NavigateTo(string viewKey)
-    {
-        NavigateToAsync(viewKey).ConfigureAwait(false);
+       await NavigateToAsync(viewKey);
     }
 
     public Task NavigateToAsync(string viewKey)
     {
-        if (!_viewModelMap.TryGetValue(viewKey, out var vmType))
+        var vmType = ViewModelRegistry.GetViewModelType(viewKey);
+        if (vmType == null)
             return Task.CompletedTask;
 
-        // 通过 DI Scope 解析 ViewModel（支持 Scoped 依赖如 AppDbContext）
+        // 通过 DI Scope 解析 ViewModel
         using var scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
         var vm = scope.ServiceProvider.GetRequiredService(vmType) as ViewModelBase;
         CurrentViewModel = vm;
 
         return Task.CompletedTask;
     }
-
 }

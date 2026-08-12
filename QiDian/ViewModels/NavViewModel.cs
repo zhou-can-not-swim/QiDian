@@ -1,23 +1,21 @@
 using QiDian.Common;
-using QiDian.Data;
+using QiDian.Contracts;
 using QiDian.Services;
-using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Windows;
 
 namespace QiDian.ViewModels
 {
     /// <summary>
     /// NavWindow ViewModel (ReactiveUI 版本)
     /// 管理左侧导航列表 + 当前选中页切换
+    /// 导航项来自插件模块（INavModule）元数据，自动加载。
     /// </summary>
     public class NavViewModel : ViewModelBase
     {
         private readonly NavigationService _navigation;
-        private readonly AppDbContext _db;
         public ObservableCollection<NavItem> NavItems { get; } = new();
 
         /// <summary>当前显示的子 ViewModel（绑定右侧内容区）</summary>
@@ -38,10 +36,9 @@ namespace QiDian.ViewModels
         /// <summary>导航命令</summary>
         public ReactiveCommand<string, Unit> NavigateCommand { get; }
 
-        public NavViewModel(NavigationService? navigation, AppDbContext db)
+        public NavViewModel(NavigationService? navigation, IEnumerable<INavModule> modules)
         {
             _navigation = navigation;
-            _db = db;
 
             // 创建导航命令
             NavigateCommand = ReactiveCommand.CreateFromTask<string>(NavigateAsync);
@@ -58,7 +55,15 @@ namespace QiDian.ViewModels
                         NavigateCommand.Execute(item.ViewKey).Subscribe();
                 });
 
-            InitializeAsync().ConfigureAwait(true);
+            // 用插件模块元数据构建左侧导航列表（按 Order 排序、按 ViewKey 去重）
+            foreach (var m in modules.OrderBy(x => x.Order))
+            {
+                if (NavItems.All(n => n.ViewKey != m.ViewKey))
+                    NavItems.Add(new NavItem(m.ViewKey, m.Title, m.Icon, m.Order));
+            }
+
+            if (NavItems.Count > 0)
+                SelectedNavItem = NavItems[0];
         }
 
         /// <summary>
@@ -68,41 +73,22 @@ namespace QiDian.ViewModels
         {
             await _navigation.NavigateToAsync(viewKey);
         }
-
-
-        public async Task InitializeAsync()
-        {
-            var menus = await _db.NavigationMenus
-                .Where(m => m.IsEnabled)
-                .OrderBy(m => m.Order)
-                .ToListAsync();
-
-                NavItems.Clear();
-                foreach (var m in menus)
-                    NavItems.Add(new NavItem(m));
-
-                if (NavItems.Count > 0)
-                    SelectedNavItem = NavItems[0];
-
-        }
     }
 
-    /// <summary>导航菜单显示包装类</summary>
+    /// <summary>导航菜单显示包装类（来自插件模块元数据）</summary>
     public class NavItem
     {
-        public int Id { get; }
-        public string Title { get; }
         public string ViewKey { get; }
+        public string Title { get; }
         public string Icon { get; }
         public int Order { get; }
 
-        public NavItem(NavigationMenu menu)
+        public NavItem(string viewKey, string title, string icon, int order)
         {
-            Id = menu.Id;
-            Title = menu.Title;
-            ViewKey = menu.ViewKey;
-            Icon = menu.Icon;
-            Order = menu.Order;
+            ViewKey = viewKey;
+            Title = title;
+            Icon = icon;
+            Order = order;
         }
     }
 }
