@@ -1,7 +1,7 @@
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
-namespace QiDian.Nav.DM;
+namespace QiDian.Nav.DM.Model.Dtos;
 
 /// <summary>
 /// 单个剧集条目。Source 为播放地址：本地视频文件路径或网页播放源（如 https://xxx/xxx.mp4）。
