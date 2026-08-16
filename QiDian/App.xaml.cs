@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using System.Windows;
 using System.Windows.Controls;
 using QiDian.Contracts;
+using QiDian.Plugins.Help;
 using QiDian.Services;
 using QiDian.ViewModels;
 
@@ -13,6 +14,12 @@ namespace QiDian
     public partial class App : Application
     {
         private IHost _host = null!;
+
+        // 内置命令插件：编译期注册（与 Navs 导航插件的动态扫描不同）
+        private static readonly ICommandPlugin[] CommandPlugins =
+        {
+            new HelpPlugin(),
+        };
 
         // 托盘图标引用
         private TaskbarIcon _notifyIcon = null!;
@@ -111,20 +118,8 @@ namespace QiDian
 
         public void MinimizeToTray()
         {
-            // 隐藏所有窗口
-            var searchWindow = _host.Services.GetRequiredService<SearchWindow>();
-            if (searchWindow != null && searchWindow.IsVisible)
-            {
-                searchWindow.ShowInTaskbar = false;
-                searchWindow.Hide();
-            }
-
-            var navWindow = _host.Services.GetRequiredService<NavWindow>();
-            if (navWindow != null && navWindow.IsVisible)
-            {
-                navWindow.ShowInTaskbar = false;
-                navWindow.Hide();
-            }
+            // 隐藏所有窗口（含插件窗口与结果弹窗）
+            _host.Services.GetRequiredService<IWindowSwitcherService>().HideAllWindows();
         }
 
         public async void ExitApplication(object sender, RoutedEventArgs e)
@@ -150,6 +145,23 @@ namespace QiDian
             // --- 窗口 ---
             services.AddSingleton<NavWindow>();
             services.AddSingleton<SearchWindow>();
+            services.AddSingleton<PluginWindow>();
+
+            // --- 内置命令插件：前缀命令 + 右下角结果弹窗 ---
+            services.AddSingleton<PopupHost>();
+            services.AddSingleton<IReadOnlyList<ICommandPlugin>>(CommandPlugins);
+            foreach (var p in CommandPlugins)
+            {
+                services.AddTransient(p.ViewType);
+                services.AddTransient(p.ViewModelType);
+            }
+            services.AddSingleton<ICommandRouter>(sp =>
+            {
+                var router = new CommandRouter(sp, sp.GetRequiredService<PopupHost>());
+                foreach (var p in CommandPlugins)
+                    router.Register(p);
+                return router;
+            });
 
             // --- ViewModels（Transient）---
             services.AddTransient<NavViewModel>();

@@ -17,6 +17,9 @@ namespace QiDian.Nav.Settings
         private int _sModifiers = 0;
         private int _sKey = 0;
 
+        private int _pModifiers = 0;
+        private int _pKey = 0;
+
         public SettingsView()
         {
             InitializeComponent();
@@ -67,6 +70,10 @@ namespace QiDian.Nav.Settings
             _sModifiers = cfg.SwitchModifiers;
             _sKey = cfg.SwitchKey;
             SHotkeyTextBox.Text = FormatHotkeyText(_sModifiers, _sKey);
+
+            _pModifiers = cfg.PluginModifiers;
+            _pKey = cfg.PluginKey;
+            PHotkeyTextBox.Text = FormatHotkeyText(_pModifiers, _pKey);
         }
 
         #endregion
@@ -101,6 +108,14 @@ namespace QiDian.Nav.Settings
                 _sModifiers = CaptureModifiers();
                 _sKey = KeyInterop.VirtualKeyFromKey(key);
                 SHotkeyTextBox.Text = FormatHotkeyText(_sModifiers, _sKey);
+                e.Handled = true;
+            }
+
+            if (focusedElement?.Name == "PHotkeyTextBox")
+            {
+                _pModifiers = CaptureModifiers();
+                _pKey = KeyInterop.VirtualKeyFromKey(key);
+                PHotkeyTextBox.Text = FormatHotkeyText(_pModifiers, _pKey);
                 e.Handled = true;
             }
         }
@@ -181,6 +196,27 @@ namespace QiDian.Nav.Settings
             cfg.SwitchKey = 0;
             HotkeySettingsStore.Save(cfg);
             SHotkeyTextBox.Text = "未设置";
+        }
+
+        private void PSave_Click(object sender, RoutedEventArgs e)
+        {
+            var cfg = HotkeySettingsStore.Load();
+            cfg.PluginModifiers = _pModifiers;
+            cfg.PluginKey = _pKey;
+            HotkeySettingsStore.Save(cfg);
+
+            MessageBox.Show("插件热键设置已保存，重启程序后生效");
+        }
+
+        private void PReset_Click(object sender, RoutedEventArgs e)
+        {
+            _pModifiers = 0;
+            _pKey = 0;
+            var cfg = HotkeySettingsStore.Load();
+            cfg.PluginModifiers = 0;
+            cfg.PluginKey = 0;
+            HotkeySettingsStore.Save(cfg);
+            PHotkeyTextBox.Text = "未设置";
         }
 
         #endregion

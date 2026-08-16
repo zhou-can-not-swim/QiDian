@@ -20,6 +20,12 @@ public sealed class HotkeyConfig
 
     /// <summary>切换热键的按键（虚拟键码）</summary>
     public int SwitchKey { get; set; }
+
+    /// <summary>插件窗口热键的修饰键（MOD_* 组合值）</summary>
+    public int PluginModifiers { get; set; }
+
+    /// <summary>插件窗口热键的按键（虚拟键码）</summary>
+    public int PluginKey { get; set; }
 }
 
 public static class HotkeySettingsStore

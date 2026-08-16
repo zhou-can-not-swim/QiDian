@@ -20,6 +20,7 @@ public class GlobalHotkeyService : IGlobalHotkeyService
 {
     private const int HIDE_HOTKEY_ID = 8000;
     private const int SWITCH_HOTKEY_ID = 8001;
+    private const int PLUGIN_HOTKEY_ID = 8002;
 
     private IntPtr _hwnd;
     private HwndSource? _source;
@@ -58,6 +59,12 @@ public class GlobalHotkeyService : IGlobalHotkeyService
             {
                 Register(SWITCH_HOTKEY_ID, cfg.SwitchModifiers, cfg.SwitchKey, "切换热键");
             }
+
+            // 插件窗口热键
+            if (cfg.PluginModifiers != 0 && cfg.PluginKey != 0)
+            {
+                Register(PLUGIN_HOTKEY_ID, cfg.PluginModifiers, cfg.PluginKey, "插件热键");
+            }
         }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
@@ -79,6 +86,7 @@ public class GlobalHotkeyService : IGlobalHotkeyService
         {
             HotKeyNativeMethods.UnregisterHotKey(_hwnd, HIDE_HOTKEY_ID);
             HotKeyNativeMethods.UnregisterHotKey(_hwnd, SWITCH_HOTKEY_ID);
+            HotKeyNativeMethods.UnregisterHotKey(_hwnd, PLUGIN_HOTKEY_ID);
         }
         _source?.RemoveHook(HwndHook);
     }
@@ -99,6 +107,12 @@ public class GlobalHotkeyService : IGlobalHotkeyService
             {
                 // 切换热键：在 SearchWindow 与 NavWindow 之间切换
                 _windowSwitcher.ToggleWindows();
+                handled = true;
+            }
+            else if (hotkeyId == PLUGIN_HOTKEY_ID)
+            {
+                // 插件热键：在 SearchWindow 与 PluginWindow 之间切换
+                _windowSwitcher.TogglePluginWindow();
                 handled = true;
             }
         }

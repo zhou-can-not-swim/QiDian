@@ -71,6 +71,37 @@
                 </StackPanel>
             </Border>
 
+            <!-- 插件窗口热键 -->
+            <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="插件窗口热键" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <TextBlock Text="点击下方输入框，然后按下想要设置的热键组合（打开内置服务窗口，再按一次返回搜索）"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Margin="0,2,0,8"/>
+                    <TextBox x:Name="PHotkeyTextBox"
+                             IsReadOnly="True"
+                             Margin="0,0,0,12"
+                             Padding="8"
+                             Background="{DynamicResource SurfaceBrush}"
+                             BorderBrush="{DynamicResource BorderBrush}"
+                             BorderThickness="1"
+                             Foreground="{DynamicResource TextPrimaryBrush}"
+                             VerticalContentAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="重置" Click="PReset_Click" Padding="12,6"
+                                Background="{DynamicResource SurfaceBrush}"
+                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Cursor="Hand"/>
+                        <Button Content="保存" Click="PSave_Click" Padding="12,6"
+                                Background="{DynamicResource PrimaryBrush}"
+                                Foreground="White" BorderThickness="0"
+                                Cursor="Hand" Margin="8,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <TextBlock Text="热键设置保存后，重启程序生效"
                        FontSize="12"
                        Foreground="{DynamicResource TextMutedBrush}"/>

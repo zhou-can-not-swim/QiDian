@@ -25,6 +25,8 @@
 	<!-- 共享契约类库 -->
 	<ItemGroup>
 		<ProjectReference Include="..\QiDian.Contracts\QiDian.Contracts.csproj" />
+		<!-- 内置命令插件（编译期注册，不动态扫描） -->
+		<ProjectReference Include="..\QiDian.Plugins\QiDian.Plugins.csproj" />
 		<!-- 只保证 F5 时插件先构建并触发 Navs 复制；不复制插件 DLL 到输出根、不产生编译耦合 -->
 		<ProjectReference Include="..\QiDian.Nav.Home\QiDian.Nav.Home.csproj" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\QiDian.Nav.Settings\QiDian.Nav.Settings.csproj" ReferenceOutputAssembly="false" />

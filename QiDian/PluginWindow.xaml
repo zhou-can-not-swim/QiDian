@@ -1,0 +1,74 @@
+<!-- 插件窗口：命令下拉框 + 参数输入框，回车执行且窗口不消失，结果弹到右下角 -->
+<Window x:Class="QiDian.PluginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Height="140" Width="520"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 输入区：命令下拉框 + 参数输入框 -->
+        <Border Grid.Row="0"
+                Background="#FFFFFF"
+                CornerRadius="8"
+                BorderBrush="#E4E7EB"
+                BorderThickness="1"
+                Padding="10,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 命令下拉框 -->
+                <ComboBox x:Name="CommandComboBox"
+                          Grid.Column="0"
+                          Width="130"
+                          VerticalContentAlignment="Center"
+                          FontSize="14"
+                          SelectionChanged="CommandComboBox_SelectionChanged">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Prefix, StringFormat={}{0}:}"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1D4ED8"/>
+                                <TextBlock Text="{Binding Title}"
+                                           Margin="8,0,0,0"
+                                           Foreground="#1F2937"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <!-- 参数输入框 -->
+                <TextBox x:Name="ArgTextBox"
+                         Grid.Column="1"
+                         Margin="8,0,0,0"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         FontSize="16"
+                         VerticalContentAlignment="Center"
+                         PreviewKeyDown="ArgTextBox_PreviewKeyDown"/>
+            </Grid>
+        </Border>
+
+        <!-- 命令说明 / 快捷键提示 -->
+        <TextBlock x:Name="HintText"
+                   Grid.Row="1"
+                   Text="选择命令，输入内容，按 Enter 执行（Esc 返回搜索）"
+                   FontSize="12"
+                   Foreground="#6B7280"
+                   Margin="4,8,0,0"/>
+    </Grid>
+</Window>
