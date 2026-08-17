@@ -7,6 +7,7 @@ using QiDian.Contracts;
 using QiDian.Plugins.Help;
 using QiDian.Services;
 using QiDian.ViewModels;
+using QiDian.Plugins.Translate;
 
 namespace QiDian
 {
@@ -18,7 +19,7 @@ namespace QiDian
         // 内置命令插件：编译期注册（与 Navs 导航插件的动态扫描不同）
         private static readonly ICommandPlugin[] CommandPlugins =
         {
-            new HelpPlugin(),
+            new HelpPlugin(),new TranslatePlugin(),
         };
 
         // 托盘图标引用

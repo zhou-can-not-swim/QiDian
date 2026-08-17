@@ -30,7 +30,7 @@ namespace QiDian
         {
             base.OnActivated(e);
             // 每次打开窗口都清空输入并聚焦
-            ArgTextBox.Clear();
+            //ArgTextBox.Clear();
             ArgTextBox.Focus();
         }
 
