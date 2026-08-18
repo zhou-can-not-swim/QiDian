@@ -4,6 +4,7 @@ using QiDian.Nav.DM.Model.Entities;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
+using Zhou.CrawlerAdapter.Services;
 
 namespace QiDian.Nav.DM.ViewModels;
 
@@ -13,7 +14,9 @@ namespace QiDian.Nav.DM.ViewModels;
 /// </summary>
 public class DMHomeViewModel : ViewModelBase
 {
+    private string url = "https://www.dm845.com/";
     private readonly DMNavigator _navigator;
+    private readonly ICrawlerService crawler;
 
     /// <summary>栏目集合。调用 <see cref="AddSection"/> 或直接向此集合添加 <see cref="DMSection"/> 即可动态加栏目</summary>
     public ObservableCollection<DMSection> Sections { get; } = new();
