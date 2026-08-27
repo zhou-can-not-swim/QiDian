@@ -6,7 +6,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:local="clr-namespace:QiDian.Converters"
         mc:Ignorable="d"
-        Height="500" Width="650"
+        Width="800"
+        MaxHeight="820"
+        SizeToContent="Height"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -16,20 +18,96 @@
     <Window.Resources>
         <local:FilePathToIconConverter x:Key="FilePathToIconConverter"/>
         <local:CollectionEmptyToVisibilityConverter x:Key="CollectionEmptyVisConv"/>
+
+        <!-- 分组标题栏（可点击折叠/展开，无 hover 背景，保持简洁） -->
+        <Style x:Key="SectionHeaderButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <!-- 折叠箭头：折叠时向右 ▶，展开时向下 ▼ -->
+        <Style x:Key="CollapseArrowStyle" TargetType="Path">
+            <Setter Property="Data" Value="M 4 0 L 8 4 L 4 8"/>
+            <Setter Property="Stroke" Value="#9CA3AF"/>
+            <Setter Property="StrokeThickness" Value="1.6"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <RotateTransform Angle="0"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 第一层：最近使用 横向卡片 -->
+        <DataTemplate x:Key="RecentItemTemplate">
+            <Border Width="76" Padding="4,6">
+                <StackPanel>
+                    <Border Width="50" Height="50" CornerRadius="12" Background="#EEF3FA" HorizontalAlignment="Center">
+                        <Image Source="{Binding FullPath, Converter={StaticResource FilePathToIconConverter}}"
+                               Width="30" Height="30"/>
+                    </Border>
+                    <TextBlock Text="{Binding FileName}"
+                               FontSize="11"
+                               Foreground="#374151"
+                               TextAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="68"
+                               Margin="0,5,0,0"/>
+                    <TextBlock Text="{Binding UsageCount, StringFormat={}{0} 次使用}"
+                               FontSize="9"
+                               Foreground="#9CA3AF"
+                               TextAlignment="Center"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- 第二层：预留固定内容 横向卡片 -->
+        <DataTemplate x:Key="FixedItemTemplate">
+            <Border Width="76" Padding="4,6">
+                <StackPanel>
+                    <Border Width="50" Height="50" CornerRadius="12" Background="#FBF3E4" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Emoji}"
+                                   FontSize="26"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="{Binding Name}"
+                               FontSize="11"
+                               Foreground="#374151"
+                               TextAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="68"
+                               Margin="0,5,0,0"/>
+                    <TextBlock Text="{Binding Description}"
+                               FontSize="9"
+                               Foreground="#9CA3AF"
+                               TextAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="68"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
+
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- 搜索输入框 -->
         <Border Grid.Row="0"
-                    Background="#FFFFFF"
-                    CornerRadius="8"
-                    BorderBrush="#E4E7EB"
-                    BorderThickness="1"
-                    Padding="12,10">
+                Background="#FFFFFF"
+                CornerRadius="8,8,0,0"
+                BorderBrush="#E4E7EB"
+                BorderThickness="1,1,1,0"
+                Padding="12,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -37,114 +115,250 @@
                 </Grid.ColumnDefinitions>
                 <!-- 输入框 -->
                 <TextBox x:Name="SearchTextBox"
-                            Grid.Column="0"
-                            BorderThickness="0"
-                            FontSize="16"
-                            VerticalContentAlignment="Center"
-                            Background="Transparent"
-                            PreviewKeyDown="SearchTextBox_PreviewKeyDown"/>
+                         Grid.Column="0"
+                         BorderThickness="0"
+                         FontSize="16"
+                         VerticalContentAlignment="Center"
+                         Background="Transparent"
+                         PreviewKeyDown="SearchTextBox_PreviewKeyDown"/>
                 <!-- 搜索图标 -->
                 <Button Grid.Column="1"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Cursor="Hand"
-                    Click="NavClick">
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="NavClick">
                     <TextBlock Text="🔍"
-                           FontSize="18"
-                           Opacity="0.6"
-                           VerticalAlignment="Center"
-                           Margin="0,0,10,0"/>
+                               FontSize="18"
+                               Opacity="0.6"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
                 </Button>
             </Grid>
         </Border>
 
-        <!-- 结果区域 -->
-        <Grid Grid.Row="1" Margin="0,1,0,0">
-            <!-- 结果列表 -->
-            <ListBox x:Name="ResultsListBox"
-                     Background="White"
-                     BorderThickness="0"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     SelectionChanged="ResultsListBox_SelectionChanged"
-                     MouseDoubleClick="ResultsListBox_MouseDoubleClick"
-                     ScrollViewer.VerticalScrollBarVisibility="Hidden">
+        <StackPanel Grid.Row="1" Margin="0,0,0,0">
 
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Height" Value="56"/>
-                        <Setter Property="Margin" Value="0,4"/>
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="Cursor" Value="Hand"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#F0F2F5"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#E8F0FE"/>
-                            </Trigger>
-                        </Style.Triggers>
-                        
-                    </Style>
-                </ListBox.ItemContainerStyle>
-
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Border CornerRadius="6" Padding="12,8">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- 图标区域 -->
-                                <Border Grid.Column="0"
-                                    Width="32" Height="32"
-                                    CornerRadius="6"
-                                    Background="#E8F0FE"
-                                    Margin="0,0,12,0">
-                                    <Image Source="{Binding FullPath, Converter={StaticResource FilePathToIconConverter}}" Width="24" Height="24"/>
+            <!-- ============ 第一层：最近使用（与搜索框一体，默认只显示第一行，展开查看全部） ============ -->
+            <Border Background="White"
+                    CornerRadius="0"
+                    BorderBrush="#E4E7EB"
+                    BorderThickness="1,1,1,0">
+                <StackPanel>
+                    <!-- 小标题-->
+                    <Button Style="{StaticResource SectionHeaderButtonStyle}"
+                            Click="RecentHeader_Click">
+                        <Grid Margin="12,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="🕘" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="最近使用"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1F2937"
+                                       Grid.Column="1"
+                                       Margin="6,0,0,0"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <Border Background="#EFF3F7" CornerRadius="10" Padding="6,1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding RecentTotalCount}"
+                                               FontSize="10"
+                                               Foreground="#6B7280"/>
                                 </Border>
+                                <Path Margin="8,0,0,0">
+                                    <Path.Style>
+                                        <Style TargetType="Path" BasedOn="{StaticResource CollapseArrowStyle}">
+                                            <Setter Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <RotateTransform Angle="0"/>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRecentExpanded}" Value="True">
+                                                    <Setter Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <RotateTransform Angle="90"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                                <!-- 标题和描述 -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding FileName}"
-                                   FontSize="14"
-                                   FontWeight="SemiBold"
-                                   Foreground="#1F2937"/>
-                                    <TextBlock Text="{Binding FullPath}"
-                                   FontSize="12"
-                                   Foreground="#6B7280"
-                                   Margin="0,4,0,0"
-                                   TextTrimming="CharacterEllipsis"/>
-                                </StackPanel>
+                    <!-- 内容区-->
+                    <Grid>
+                        <Border Height="1" Background="#F0F2F5" VerticalAlignment="Top"/>
+                        <Grid Margin="0,4,0,0">
+                            <!-- 搜索结果 -->
+                            <ListBox x:Name="RecentListBox"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     SelectionChanged="RecentListBox_SelectionChanged"
+                                     MouseDoubleClick="RecentListBox_MouseDoubleClick"
+                                     Visibility="{Binding RecentItems, Converter={StaticResource CollectionEmptyVisConv}}">
+                                <ListBox.Style>
+                                    <Style TargetType="ListBox">
+                                        <!-- 折叠 -->
+                                        <Setter Property="MaxHeight" Value="120"/>
+                                        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRecentExpanded}" Value="True">
+                                                <Setter Property="MaxHeight" Value="310"/>
+                                                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.Style>
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Margin" Value="2"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <Border x:Name="Bd"
+                                                                Background="{TemplateBinding Background}"
+                                                                CornerRadius="10"
+                                                                Padding="4">
+                                                            <ContentPresenter/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="Bd" Property="Background" Value="#F0F2F5"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter TargetName="Bd" Property="Background" Value="#E8F0FE"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <StaticResource ResourceKey="RecentItemTemplate"/>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <!-- 空状态提示 -->
+                                <Border Background="Transparent"
+                                        CornerRadius="8"
+                                        Padding="24,20"
+                                        Visibility="{Binding RecentItems, Converter={StaticResource CollectionEmptyVisConv}, ConverterParameter=Invert}">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="🔍"
+                                                   FontSize="28"
+                                                   HorizontalAlignment="Center"
+                                                   Opacity="0.3"/>
+                                        <TextBlock Text="未找到匹配结果"
+                                                   FontSize="13"
+                                                   Foreground="#9CA3AF"
+                                                   Margin="0,6,0,0"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-
-            <!-- 空状态提示（仅在搜索无结果时显示） -->
-            <Border x:Name="EmptyStateBorder"
-                    Background="White"
-                    CornerRadius="8"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Center"
-                    Padding="24,20">
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="🔍"
-                               FontSize="32"
-                               HorizontalAlignment="Center"
-                               Opacity="0.3"/>
-                    <TextBlock x:Name="EmptyStateText"
-                               Text="未找到匹配结果"
-                               FontSize="14"
-                               Foreground="#9CA3AF"
-                               Margin="0,8,0,0"
-                               HorizontalAlignment="Center"/>
+                        </Grid>
                 </StackPanel>
             </Border>
-        </Grid>
+
+            <!-- ============ 第二层：预留固定内容（与第一层一体，内容固定不变，默认折叠） ============ -->
+            <Border Background="White"
+                    CornerRadius="0,0,8,8"
+                    BorderBrush="#E4E7EB"
+                    BorderThickness="1,1,1,1"
+                    Margin="0,0,0,0">
+                <StackPanel>
+                    <!-- 标题栏（点击折叠/展开，默认折叠） -->
+                    <Button Style="{StaticResource SectionHeaderButtonStyle}"
+                            Click="FixedHeader_Click">
+                        <Grid Margin="12,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="🧩" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="功能区（预留）"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1F2937"
+                                       Grid.Column="1"
+                                       Margin="6,0,0,0"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <Border Background="#EFF3F7" CornerRadius="10" Padding="6,1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding FixedItems.Count}"
+                                               FontSize="10"
+                                               Foreground="#6B7280"/>
+                                </Border>
+                                <Path Margin="8,0,0,0">
+                                    <Path.Style>
+                                        <Style TargetType="Path" BasedOn="{StaticResource CollapseArrowStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFixedExpanded}" Value="True">
+                                                    <Setter Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <RotateTransform Angle="90"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
+                    <!-- 内容区 -->
+                    <Grid Visibility="Collapsed">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFixedExpanded}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Grid>
+                            <Border Height="1" Background="#F0F2F5" VerticalAlignment="Top"/>
+                            <ScrollViewer MaxHeight="260"
+                                          Margin="4,4,0,0"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding FixedItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <StaticResource ResourceKey="FixedItemTemplate"/>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
     </Grid>
 </Window>

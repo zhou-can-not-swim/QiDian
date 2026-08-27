@@ -25,38 +25,24 @@ namespace QiDian
             this.WhenActivated(d =>
             {
                 this.Bind(ViewModel, vm => vm.SearchKeyword, v => v.SearchTextBox.Text).DisposeWith(d);
-                this.OneWayBind(ViewModel, vm => vm.Results, v => v.ResultsListBox.ItemsSource).DisposeWith(d);
-                // 绑定选中项，彻底抛弃SelectionChanged后台事件
-                this.Bind(ViewModel, vm => vm.SelectedFile, v => v.ResultsListBox.SelectedItem)
-                    .DisposeWith(d);
-
-                // 有结果就显示结果列表（搜索期间保留已有结果，避免列表闪烁）
-                this.WhenAnyValue(x => x.ViewModel!.Results)
-                    .Select(results => results?.Any() == true ? Visibility.Visible : Visibility.Collapsed)
-                    .BindTo(this, x => x.ResultsListBox.Visibility)
-                    .DisposeWith(d);
-
-                // 仅「已搜索、无搜索在进行、且无结果」时显示空状态提示
-                this.WhenAnyValue(x => x.ViewModel!.HasSearched, x => x.ViewModel!.IsSearching,
-                        x => x.ViewModel!.Results,
-                        (hasSearched, isSearching, results) =>
-                            hasSearched && !isSearching && results?.Any() != true
-                                ? Visibility.Visible : Visibility.Collapsed)
-                    .BindTo(this, x => x.EmptyStateBorder.Visibility)
+                this.OneWayBind(ViewModel, vm => vm.RecentItems, v => v.RecentListBox.ItemsSource).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.SelectedFile, v => v.RecentListBox.SelectedItem)
                     .DisposeWith(d);
             });
 
-
-
-            // 使窗口可拖动
-            MouseLeftButtonDown += (s, e) => DragMove();
+            // 使窗口可拖动（点击按钮等交互元素时不触发，避免误拖）
+            MouseLeftButtonDown += (s, e) =>
+            {
+                if (e.OriginalSource is Button) return;
+                DragMove();
+            };
             _windowSwitcher = windowSwitcher;
         }
 
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            // 每次打开窗口都重置为「只显示搜索栏」的初始状态
+            // 每次打开窗口都重置为初始状态（两层默认折叠，保留用户上次的折叠/展开选择）
             _viewModel.Reset();
             SearchTextBox.Focus();
             SearchTextBox.SelectAll();
@@ -75,65 +61,79 @@ namespace QiDian
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
-        private void ResultsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        // ============ 两层折叠/展开 ============
+
+        private void RecentHeader_Click(object sender, RoutedEventArgs e)
         {
-            // 更新 ViewModel 的选中项
-            if (ResultsListBox.SelectedItem is FileEntry selected)
+            // 切换展开/折叠，折叠时只显示第一行数据（由 ViewModel 控制数据量）
+            _viewModel.ToggleRecentExpanded();
+        }
+
+        private void FixedHeader_Click(object sender, RoutedEventArgs e)
+        {
+            _viewModel.IsFixedExpanded = !_viewModel.IsFixedExpanded;
+        }
+
+        private void RecentListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // 更新 ViewModel 的选中项（第一层）
+            if (RecentListBox.SelectedItem is FileEntry selected)
             {
                 _viewModel.SelectedFile = selected;
             }
         }
 
-        private void ResultsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void RecentListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (ResultsListBox.SelectedItem is FileEntry result)
+            if (RecentListBox.SelectedItem is FileEntry)
             {
-                _viewModel.OpenFileCommand.Execute().Subscribe();
-                _windowSwitcher.HideOrShowMainWindow();
+                // TODO(真实逻辑)：接入真实打开动作
+                _viewModel.OpenSelectedFileMock();
             }
         }
 
         /// <summary>
-        /// 键盘导航：上下键选择结果，Enter 打开，Escape 关闭
+        /// 键盘导航：上下/左右键选择第一层结果，Enter 打开（当前为模拟），Escape 关闭
         /// </summary>
         private void SearchTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             switch (e.Key)
             {
                 case Key.Down:
-                    // 向下移动选择
-                    if (_viewModel.Results.Count() > 0)
+                case Key.Right:
+                    // 向下/向右移动选择
+                    if (_viewModel.RecentItems.Count > 0)
                     {
-                        int nextIndex = ResultsListBox.SelectedIndex + 1;
-                        if (nextIndex < _viewModel.Results.Count())
+                        int nextIndex = RecentListBox.SelectedIndex + 1;
+                        if (nextIndex < _viewModel.RecentItems.Count)
                         {
-                            ResultsListBox.SelectedIndex = nextIndex;
-                            ResultsListBox.ScrollIntoView(ResultsListBox.SelectedItem);
+                            RecentListBox.SelectedIndex = nextIndex;
+                            RecentListBox.ScrollIntoView(RecentListBox.SelectedItem);
                         }
                         e.Handled = true;
                     }
                     break;
 
                 case Key.Up:
-                    // 向上移动选择
-                    if (_viewModel.Results.Count() > 0)
+                case Key.Left:
+                    // 向上/向左移动选择
+                    if (_viewModel.RecentItems.Count > 0)
                     {
-                        int prevIndex = ResultsListBox.SelectedIndex - 1;
+                        int prevIndex = RecentListBox.SelectedIndex - 1;
                         if (prevIndex >= 0)
                         {
-                            ResultsListBox.SelectedIndex = prevIndex;
-                            ResultsListBox.ScrollIntoView(ResultsListBox.SelectedItem);
+                            RecentListBox.SelectedIndex = prevIndex;
+                            RecentListBox.ScrollIntoView(RecentListBox.SelectedItem);
                         }
                         e.Handled = true;
                     }
                     break;
 
                 case Key.Enter:
-                    // 打开选中的文件
-                    if (ResultsListBox.SelectedItem is FileEntry result)
+                    // 打开选中的文件（当前为模拟打开）
+                    if (RecentListBox.SelectedItem is FileEntry)
                     {
-                        _viewModel.OpenFileCommand.Execute().Subscribe();
-                        _windowSwitcher.HideOrShowMainWindow();
+                        _viewModel.OpenSelectedFileMock();
                         e.Handled = true;
                     }
                     break;
