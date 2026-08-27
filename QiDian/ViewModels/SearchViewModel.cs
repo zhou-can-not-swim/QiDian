@@ -1,5 +1,6 @@
 ﻿using DynamicData;
 using QiDian.Models;
+using QiDian.Services;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;

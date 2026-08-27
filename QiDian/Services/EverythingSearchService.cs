@@ -6,8 +6,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
 using QiDian.Helpers.LevelDBHelper;
+using QiDian.Models;
 
-namespace QiDian.Models
+namespace QiDian.Services
 {
     /// <summary>
     /// 智能 Everything 搜索服务 - 支持动态匹配、缩写展开、拼音首字母
@@ -64,34 +65,14 @@ namespace QiDian.Models
             return _available.Value;
         }
 
-        public List<FileEntry> Search(string keyword, int maxResults = 10000)
+        public List<FileEntry> Search(string keyword, int maxResults = 100)
         {
             if (string.IsNullOrWhiteSpace(keyword))
                 return new List<FileEntry>();
 
             var keywordLower = keyword.Trim().ToLower();
 
-            var everythingResults = LowSearch(BuildKey(keyword), maxResults);
-
-            // ── 将 LevelDB 使用记录映射到 FileEntry（供 CalculateScore 使用） ──
-            var dbRecords = _store.GetRecordsByKeyword(keywordLower);
-            //if (dbRecords.Count > 0 && everythingResults.Count > 0)
-            //{
-            //    var usageLookup = dbRecords
-            //        .GroupBy(r => r.fullPath, StringComparer.OrdinalIgnoreCase)
-            //        .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-            //    foreach (var f in everythingResults)
-            //    {
-            //        if (usageLookup.TryGetValue(f.FullPath, out var record))//如果path对的上，复制count
-            //        {
-            //            f.UsageCount = record.Count;
-            //            if (record.Timestamp > 0)
-            //                f.LastUsed = DateTimeOffset.FromUnixTimeMilliseconds(record.Timestamp).DateTime;
-            //        }
-            //    }
-            //}
-
-            // ── 过滤：只保留 .exe / .lnk ──
+            var everythingResults = SearchByEveryThing(BuildKey(keyword), maxResults);
             var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 ".exe",
@@ -102,36 +83,24 @@ namespace QiDian.Models
                   \\\$Recycle\.Bin\\|
                   \\AppData\\Local\\Temp\\|
                   \\System32\\|\\Program Files\\WindowsApps\\|
-                  \\Program Files \(x86\)\\",
+                  \\Program Files \(x86\)\\|
+                  \\Start Menu\\Programs",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled
             );
-            var dbDict = dbRecords.ToDictionary(//构建成字典
-                r => r.fullPath,
-                r => r,
-                StringComparer.OrdinalIgnoreCase
-            );
-            var scored = everythingResults
+            var r = everythingResults
                 .Where(f => allowedExtensions.Contains(Path.GetExtension(f.FullPath)))
                 .Where(f => !excludePattern.IsMatch(f.FullPath))
-                .Select(f => new { File = f, Score = CalculateScore(f, keywordLower, dbDict) })
+                .Select(f => new { File = f, Score = CalculateScore(f, keywordLower)})
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.File.FullPath)
                 .Select(x => x.File)
                 .Take(maxResults)
                 .ToList();
 
-            return scored;
+            return r;
         }
-
-        /// <summary>
-        /// 直接委托给 FuzzyMatchScore 统一算法。
-        /// </summary>
-        private double SmartMatchScore(string name, string keyword)
-        {
-            return FuzzyMatchScore(keyword, name);
-        }
-
-        public List<FileEntry> LowSearch(string keyword, int maxResults)
+        
+        public List<FileEntry> SearchByEveryThing(string keyword, int maxResults)
         {
             var results = new List<FileEntry>();
             if (string.IsNullOrWhiteSpace(keyword)) return results;
@@ -152,7 +121,6 @@ namespace QiDian.Models
 
                 if (!Everything_QueryW(true))
                 {
-                    System.Diagnostics.Debug.WriteLine("[Everything] QueryW returned false — Everything 服务可能未运行");
                     return results;
                 }
 
@@ -169,8 +137,7 @@ namespace QiDian.Models
                     results.Add(new FileEntry
                     {
                         FullPath = sb.ToString(),
-                        Size = size,
-                        LastModified = fileTime > 0 ? DateTime.FromFileTime(fileTime) : DateTime.MinValue
+
                     });
                 }
             }
@@ -185,7 +152,7 @@ namespace QiDian.Models
         /// <summary>
         /// 综合打分
         /// </summary>
-        private double CalculateScore(FileEntry file, string keyword, Dictionary<string, MatchRecord> dbDic)
+        private double CalculateScore(FileEntry file, string keyword)
         {
             string? fileName = Path.GetFileNameWithoutExtension(file.FullPath);
             string? fileNameExt = Path.GetFileName(file.FullPath);
@@ -195,9 +162,9 @@ namespace QiDian.Models
                 FuzzyMatchScore(keyword, fileNameExt ?? ""));
 
             // ── 软件名关联加分（比例融合，而非简单叠加） ──
-            if (!string.IsNullOrEmpty(file.SoftwareName))
+            if (!string.IsNullOrEmpty(file.FileName))
             {
-                double softScore = FuzzyMatchScore(keyword, file.SoftwareName);
+                double softScore = FuzzyMatchScore(keyword, file.FileName);
                 if (softScore > matchScore)
                     matchScore += (softScore - matchScore) * 0.6;
 
@@ -210,38 +177,11 @@ namespace QiDian.Models
 
             //外部加分（使用频率）
             double extrinsicBonus = 0;
-            bool v = dbDic.TryGetValue(file.FullPath, out var record);
-            if (v)
-            {
-                file.UsageCount = record.Count;
-            }
-            else
-            {
-                file.UsageCount = 0;
-            }
-
             if (file.UsageCount > 0)
             {
-                extrinsicBonus += Math.Min(file.UsageCount * 10.0, 50);   // 次数加分，封顶 15
+                extrinsicBonus += Math.Min(file.UsageCount * 10.0, 50);
 
-                //double ageDays = (DateTime.Now - file.LastUsed).TotalDays;
-                //if (ageDays < 1)
-                //    extrinsicBonus += 10;                                 // 今天用过
-                //else if (ageDays < 7)
-                //    extrinsicBonus += 7;                                  // 一周内
-                //else if (ageDays < 30)
-                //    extrinsicBonus += 3;                                  // 一月内
             }
-
-            //if (file.LastModified > DateTime.Now.AddDays(-7))
-            //    extrinsicBonus += 10;                            // 最近 7 天
-            //else if (file.LastModified > DateTime.Now.AddDays(-30))
-            //    extrinsicBonus += 5;                             // 最近 30 天
-
-            ////扩展名加分
-            //string ext = Path.GetExtension(file.FullPath)?.ToLower() ?? "";
-            //if (ext == ".exe" || ext == ".lnk")
-            //    extrinsicBonus += 5;                             // 可执行文件
 
             // 衰减权重：匹配分 0 → 权重 50%，匹配分 90 → 权重 5%
             double bonusWeight = Math.Max(0, (100 - Math.Min(matchScore, 100)) / 100.0) * 0.5;
