@@ -88,7 +88,6 @@ namespace QiDian
             if (RecentListBox.SelectedItem is FileEntry)
             {
                 // TODO(真实逻辑)：接入真实打开动作
-                _viewModel.OpenSelectedFileMock();
             }
         }
 
@@ -130,16 +129,14 @@ namespace QiDian
                     break;
 
                 case Key.Enter:
-                    // 打开选中的文件（当前为模拟打开）
                     if (RecentListBox.SelectedItem is FileEntry)
                     {
-                        _viewModel.OpenSelectedFileMock();
+                        //_viewModel.OpenSelectedFileMock();
                         e.Handled = true;
                     }
                     break;
 
                 case Key.Escape:
-                    // 关闭搜索窗口
                     Hide();
                     ShowInTaskbar = false;
                     e.Handled = true;

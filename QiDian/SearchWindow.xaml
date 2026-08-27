@@ -56,13 +56,8 @@
                                Foreground="#374151"
                                TextAlignment="Center"
                                TextTrimming="CharacterEllipsis"
-                               MaxWidth="68"
+                               MaxWidth="60"
                                Margin="0,5,0,0"/>
-                    <TextBlock Text="{Binding UsageCount, StringFormat={}{0} 次使用}"
-                               FontSize="9"
-                               Foreground="#9CA3AF"
-                               TextAlignment="Center"
-                               Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
         </DataTemplate>
@@ -82,7 +77,7 @@
                                Foreground="#374151"
                                TextAlignment="Center"
                                TextTrimming="CharacterEllipsis"
-                               MaxWidth="68"
+                               MaxWidth="60"
                                Margin="0,5,0,0"/>
                     <TextBlock Text="{Binding Description}"
                                FontSize="9"
