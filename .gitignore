@@ -427,4 +427,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-reasonix.toml
+/.reasonix
+/reasonix.toml

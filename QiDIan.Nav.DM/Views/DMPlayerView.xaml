@@ -1,0 +1,208 @@
+<UserControl x:Class="QiDian.Nav.DM.Views.DMPlayerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
+             PreviewKeyDown="Root_PreviewKeyDown">
+
+    <UserControl.Resources>
+        <!-- 抽屉里剧集项样式 -->
+        <Style x:Key="DrawerEpisodeStyle" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="Black">
+        <!-- ===== 视频区（铺满整个导航内容区） ===== -->
+        <vlc:VideoView x:Name="Player" Background="Black"/>
+
+        <!-- 未加载 / 无源时的提示 -->
+        <TextBlock x:Name="PlayerHint" Text="正在加载…"
+                   FontSize="16" Foreground="#888888"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+        <!-- ===== 顶部叠加：返回 + 番剧/剧集标题 ===== -->
+        <Border VerticalAlignment="Top" Padding="20,14"
+                Background="#66000000">
+            <DockPanel>
+                <Button x:Name="BackButton" Click="BackButton_Click" Cursor="Hand" Padding="0"
+                        Width="36" Height="36" Background="#66000000"
+                        BorderBrush="#44FFFFFF" BorderThickness="1"
+                        DockPanel.Dock="Left">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="18">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="←" FontSize="18" Foreground="White"/>
+                </Button>
+                <TextBlock Text="{Binding Anime.Title}" FontSize="16" FontWeight="Bold"
+                           Foreground="White" Margin="14,0,0,0"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== 底部叠加：控制条 ===== -->
+        <Border x:Name="BottomBar" VerticalAlignment="Bottom"
+                Background="#66000000" Padding="20,12,20,18">
+            <StackPanel>
+                <Slider x:Name="SeekSlider" Minimum="0" Maximum="1" Value="0"
+                        IsMoveToPointEnabled="True"
+                        Foreground="{DynamicResource PrimaryBrush}"
+                        PreviewMouseLeftButtonDown="SeekSlider_PreviewMouseLeftButtonDown"
+                        PreviewMouseLeftButtonUp="SeekSlider_PreviewMouseLeftButtonUp"
+                        ValueChanged="SeekSlider_ValueChanged"/>
+                <DockPanel Margin="0,8,0,0">
+                    <Button x:Name="PlayPauseButton" Content="▶ 播放" Click="PlayPauseButton_Click"
+                            Padding="18,6" Cursor="Hand" BorderThickness="0"
+                            Background="{DynamicResource PrimaryBrush}" Foreground="White"
+                            HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding CurrentEpisode.Title}"
+                               FontSize="13" Foreground="#DDDDDD" Margin="14,0,0,0"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding PositionText}"
+                               FontSize="13" Foreground="#DDDDDD"
+                               VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                </DockPanel>
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="11" Foreground="#AAAAAA"
+                           Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 右下角按钮：抽屉选集 ===== -->
+        <Button x:Name="DrawerToggle" Click="DrawerToggle_Click" Cursor="Hand"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,24,100" Width="58" Height="58"
+                Background="#66000000" BorderBrush="#44FFFFFF" BorderThickness="1">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="29">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#99000000"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="White"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Button.Template>
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock Text="▤" FontSize="20" Foreground="White"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="选集" FontSize="11" Foreground="White"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Button>
+
+        <!-- ===== 抽屉：右侧滑出的全部剧集 ===== -->
+        <Grid x:Name="DrawerRoot" Visibility="Collapsed" Panel.ZIndex="99">
+            <!-- 半透明遮罩，点击关闭 -->
+            <Border x:Name="Scrim" Background="#99000000" Opacity="0"
+                    MouseLeftButtonDown="Scrim_MouseLeftButtonDown"/>
+
+            <!-- 抽屉面板 -->
+            <Border x:Name="DrawerPanel" Width="320" HorizontalAlignment="Right"
+                    Background="{DynamicResource SurfaceBrush}">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="DrawerTranslate" X="320"/>
+                </Border.RenderTransform>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 抽屉头部 -->
+                    <DockPanel Grid.Row="0" Margin="18,16,14,12">
+                        <Button Click="DrawerClose_Click" Cursor="Hand" Padding="0"
+                                Width="30" Height="30" Background="Transparent"
+                                BorderThickness="0" DockPanel.Dock="Right">
+                            <TextBlock Text="✕" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Button>
+                        <TextBlock Text="选集" FontSize="17" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Episodes.Count, StringFormat=（{0} 集）}"
+                                   FontSize="12" Margin="8,2,0,0"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <!-- 剧集网格：选中即切换播放 -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled" Padding="14,0,14,16">
+                        <ListBox ItemsSource="{Binding Episodes}"
+                                 SelectedItem="{Binding CurrentEpisode, Mode=TwoWay}"
+                                 ItemContainerStyle="{StaticResource DrawerEpisodeStyle}"
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="88" Padding="0,8">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding ProgressText}"
+                                                       FontSize="10" Margin="0,2,0,0"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

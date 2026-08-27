@@ -13,6 +13,21 @@ public static class NavPluginLoader
 {
     public static IReadOnlyList<INavModule> LoadModules(string pluginsDir)
     {
+        // 允许插件从自身目录解析托管依赖（如 LibVLCSharp.dll），
+        // 这样插件可以带上自己的第三方库，而不需要都塞进主程序输出目录。
+        AssemblyLoadContext.Default.Resolving += (ctx, name) =>
+        {
+            try
+            {
+                var candidate = Path.Combine(pluginsDir, name.Name + ".dll");
+                return File.Exists(candidate) ? ctx.LoadFromAssemblyPath(candidate) : null;
+            }
+            catch
+            {
+                return null;
+            }
+        };
+
         var modules = new List<INavModule>();
         if (!Directory.Exists(pluginsDir)) return modules;
 

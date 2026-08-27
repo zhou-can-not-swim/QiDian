@@ -3,37 +3,36 @@ using ReactiveUI;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace QiDian.Nav.DM;
+namespace QiDian.Nav.DM.Views;
 
-/// <summary>
-/// DM 导航页宿主视图：内部多页切换容器。视频播放逻辑已拆到 <see cref="DMPlayerView"/>。
-/// </summary>
-public partial class DMView : UserControl, IViewFor<DMViewModel>
+public partial class DMDetailView : UserControl, IViewFor<DMDetailViewModel>
 {
-    public DMView()
+    public DMDetailView()
     {
         InitializeComponent();
     }
 
+    private void Back_Click(object sender, RoutedEventArgs e) => ViewModel?.Back();
+
     #region ViewModel
 
-    public DMViewModel? ViewModel
+    public DMDetailViewModel? ViewModel
     {
-        get => (DMViewModel?)GetValue(ViewModelProperty);
+        get => (DMDetailViewModel?)GetValue(ViewModelProperty);
         set => SetValue(ViewModelProperty, value);
     }
 
     object? IViewFor.ViewModel
     {
         get => ViewModel;
-        set => ViewModel = (DMViewModel?)value;
+        set => ViewModel = (DMDetailViewModel?)value;
     }
 
     public static readonly DependencyProperty ViewModelProperty =
-        DependencyProperty.Register("ViewModel", typeof(DMViewModel), typeof(DMView),
+        DependencyProperty.Register("ViewModel", typeof(DMDetailViewModel), typeof(DMDetailView),
             new PropertyMetadata(null, (d, e) =>
             {
-                if (d is DMView view)
+                if (d is DMDetailView view)
                     view.DataContext = e.NewValue;
             }));
 

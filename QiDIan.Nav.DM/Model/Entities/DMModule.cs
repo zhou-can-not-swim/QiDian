@@ -1,7 +1,8 @@
 using QiDian.Contracts;
-using QiDian.Nav.DM;
+using QiDian.Nav.DM.ViewModels;
 
-namespace QiDian.Nav.DM;
+
+namespace QiDian.Nav.DM.Model.Entities;
 
 /// <summary>
 /// Home 导航插件模块描述。主程序通过无参构造实例化它，读取导航元数据并注册页面。
