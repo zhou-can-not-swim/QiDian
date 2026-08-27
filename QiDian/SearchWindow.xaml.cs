@@ -39,15 +39,6 @@ namespace QiDian
             _windowSwitcher = windowSwitcher;
         }
 
-        protected override void OnActivated(EventArgs e)
-        {
-            base.OnActivated(e);
-            // 每次打开窗口都重置为初始状态（两层默认折叠，保留用户上次的折叠/展开选择）
-            _viewModel.Reset();
-            SearchTextBox.Focus();
-            SearchTextBox.SelectAll();
-        }
-
         private void SearchWindow_Deactivated(object sender, EventArgs e)
         {
             // 延迟隐藏，避免因点击窗口内部控件触发 Deactivated 导致误关
@@ -61,11 +52,8 @@ namespace QiDian
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
-        // ============ 两层折叠/展开 ============
-
         private void RecentHeader_Click(object sender, RoutedEventArgs e)
         {
-            // 切换展开/折叠，折叠时只显示第一行数据（由 ViewModel 控制数据量）
             _viewModel.ToggleRecentExpanded();
         }
 
@@ -87,7 +75,8 @@ namespace QiDian
         {
             if (RecentListBox.SelectedItem is FileEntry)
             {
-                // TODO(真实逻辑)：接入真实打开动作
+                _viewModel.SelectedFile = (FileEntry)RecentListBox.SelectedItem;
+                _viewModel.OpenFile();
             }
         }
 
@@ -131,7 +120,8 @@ namespace QiDian
                 case Key.Enter:
                     if (RecentListBox.SelectedItem is FileEntry)
                     {
-                        //_viewModel.OpenSelectedFileMock();
+                        _viewModel.SelectedFile = (FileEntry)RecentListBox.SelectedItem;
+                        _viewModel.OpenFile();
                         e.Handled = true;
                     }
                     break;

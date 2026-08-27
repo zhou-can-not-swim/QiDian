@@ -12,6 +12,7 @@ using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Windows;
+using System.Windows.Shapes;
 
 namespace QiDian
 {
@@ -73,7 +74,7 @@ namespace QiDian
 
 
         /// <summary>折叠时第一行可容纳的图标数量（窗口 800px 宽，约 8 个）</summary>
-        private const int RecentRowCapacity = 8;
+        private const int RecentRowCapacity = 9;
 
         /// <summary>当前搜索的全部结果（折叠时界面只显示第一行）</summary>
         private List<FileEntry> _recentAll = new();
@@ -99,11 +100,14 @@ namespace QiDian
             };
 
             // 初始化命令
-            //OpenFileCommand = ReactiveCommand.Create(OpenSelectedFile);
+            OpenFileCommand = ReactiveCommand.Create(OpenSelectedFile);
             //OpenFileLocationCommand = ReactiveCommand.Create(OpenSelectedFileLocation);
             //CopyPathCommand = ReactiveCommand.Create(CopySelectedPath);
             //RunAsAdminCommand = ReactiveCommand.Create(RunSelectedAsAdmin);
 
+            // 预加载第一层数据：窗口显示前 RecentItems 已就绪，避免打开后有空白等待
+            SearchRecent("");
+            RebuildRecentItems();
 
             this.WhenAnyValue(x => x.SearchKeyword)
                .Throttle(new TimeSpan(100))
@@ -114,7 +118,30 @@ namespace QiDian
                .Select(kw => !string.IsNullOrWhiteSpace(kw))
                .ObserveOn(RxApp.MainThreadScheduler)
                .Subscribe(searching => IsSearching = searching);
+
         }
+
+        private void OpenSelectedFile()
+        {
+            if (SelectedFile == null) return;
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = SelectedFile.FullPath,
+                    UseShellExecute = true  // 使用系统默认方式打开
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"打开失败: {ex.Message}", "错误");
+            }
+        }
+        public void OpenFile()
+        {
+            Task.Run(()=> OpenSelectedFile());
+        }
+        #region search
         private void ScheduleSearch(string obj)
         {
             _searchTimer?.Stop();
@@ -172,20 +199,14 @@ namespace QiDian
             }
         }
 
-        /// <summary>
-        /// 真实搜索（第一层）：枚举开始菜单 Programs 下的快捷方式作为「最近使用」数据。
-        /// 注意：本方法只更新数据源 _recentAll（纯 List，后台线程安全），
-        /// 界面显示由 RebuildRecentItems 在 UI 线程刷新——不要在后台线程直接改 RecentItems。
-        /// TODO：后续接入真实搜索（如 Everything）时，替换本方法的取数逻辑即可。
-        /// </summary>
         private void SearchRecent(string keyword)
         {
             string startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
-            string programsDir = Path.Combine(startMenu, "Programs");
+            string programsDir = System.IO.Path.Combine(startMenu, "Programs");
 
             var result = Directory.EnumerateFiles(programsDir, "*lnk", SearchOption.AllDirectories)
                 .Where(f => string.IsNullOrWhiteSpace(keyword)
-                            || Path.GetFileNameWithoutExtension(f)
+                            || System.IO.Path.GetFileNameWithoutExtension(f)
                                 .Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .Select(f => new FileEntry { FullPath = f })
                 .ToList();
@@ -194,8 +215,11 @@ namespace QiDian
             RecentTotalCount = result.Count;
         }
 
+        #endregion
+
         public void Reset()
         {
+
             _searchCts?.Cancel();
             _searchTimer?.Stop();
             SearchKeyword = "";
@@ -212,6 +236,17 @@ namespace QiDian
         {
             RecentItems = new ObservableCollection<FileEntry>(
                 IsRecentExpanded ? _recentAll : _recentAll.Take(RecentRowCapacity));
+
+            // 自动选中第一项，保证 Enter / 双击可直接打开（否则 SelectedItem 为 null 时无反应）
+            if (SelectedFile!=null)
+            {
+
+            }
+            else
+            {
+                SelectedFile = RecentItems.FirstOrDefault();
+            }
+
         }
 
         public void ToggleRecentExpanded()
@@ -230,5 +265,7 @@ namespace QiDian
             _searchTimer?.Dispose();
             _searchCts?.Dispose();
         }
+
+
     }
 }
