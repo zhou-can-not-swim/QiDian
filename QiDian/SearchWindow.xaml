@@ -208,7 +208,7 @@
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsRecentExpanded}" Value="True">
                                                 <Setter Property="MaxHeight" Value="310"/>
-                                                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+                                                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
