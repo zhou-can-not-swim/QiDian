@@ -45,7 +45,8 @@
 
         <!-- 第一层：最近使用 横向卡片 -->
         <DataTemplate x:Key="RecentItemTemplate">
-            <Border Width="76" Padding="4,6">
+            <Border Width="76" Padding="4,6"
+                    ToolTip="{Binding FileName}">
                 <StackPanel>
                     <Border Width="45" Height="45" CornerRadius="12" Background="#EEF3FA" HorizontalAlignment="Center">
                         <Image Source="{Binding Icon, Converter={StaticResource FilePathToIconConverter}}"
@@ -64,7 +65,8 @@
 
         <!-- 第二层：预留固定内容 横向卡片 -->
         <DataTemplate x:Key="FixedItemTemplate">
-            <Border Width="76" Padding="4,6">
+            <Border Width="76" Padding="4,6"
+                    ToolTip="{Binding Name}">
                 <StackPanel>
                     <Border Width="50" Height="50" CornerRadius="12" Background="#FBF3E4" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding Emoji}"
