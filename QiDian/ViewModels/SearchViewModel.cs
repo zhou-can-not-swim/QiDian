@@ -228,9 +228,11 @@ namespace QiDian
         private void SearhByEveryThing(string keyword)
         {
             string k = keyword.Split(" ")[0];
-            var results = _everything.SearchByEveryThing(k,100);
+            var results = _everything.Search(k,10000);
 
             _recentAll = results;
+            RecentTotalCount = results.Count;
+
         }
         #endregion
 
@@ -264,6 +266,26 @@ namespace QiDian
                 SelectedFile = RecentItems.FirstOrDefault();
             }
 
+            // 后台线程异步提取图标（不阻塞 UI，数据量多时也不会卡死）
+            StartIconLoadingAsync();
+        }
+
+        /// <summary>
+        /// 后台线程异步提取未加载的图标：提取完成后通过绑定自动刷新界面。
+        /// 图标提取（ExtractAssociatedIcon）开销大，绝不能在 UI 线程同步做。
+        /// </summary>
+        private void StartIconLoadingAsync()
+        {
+            var pending = _recentAll.Where(f => f.Icon == null).ToList();
+            if (pending.Count == 0) return;
+
+            Task.Run(() =>
+            {
+                foreach (var item in pending)
+                {
+                    item.Icon = QiDian.Converters.FilePathToIconConverter.ExtractIcon(item.FullPath);
+                }
+            });
         }
 
         public void ToggleRecentExpanded()

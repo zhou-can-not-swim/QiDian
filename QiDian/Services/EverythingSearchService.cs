@@ -88,17 +88,19 @@ namespace QiDian.Services
                 RegexOptions.IgnoreCase | RegexOptions.Compiled
             );
             var r = everythingResults
-                .Select(f => new{
-                    File = f,
-                    HasIcon = IconChecker.HasIcon(f.FullPath)
-                })
-                .GroupBy(x => x.HasIcon)
-                .ToDictionary(
-                    g => g.Key ? "有图标" : "无图标",
-                    g => g.Select(x => x.File).ToList()
-                )
-                .Where(kvp => kvp.Key == "有图标")
-                .SelectMany(kvp => kvp.Value)
+                .Where(f => allowedExtensions.Contains(Path.GetExtension(f.FullPath)))
+                .Where(f => !excludePattern.IsMatch(f.FullPath))
+                //.Select(f => new{
+                //    File = f,
+                //    HasIcon = IconChecker.HasIcon(f.FullPath)
+                //})
+                //.GroupBy(x => x.HasIcon)
+                //.ToDictionary(
+                //    g => g.Key ? "有图标" : "无图标",
+                //    g => g.Select(x => x.File).ToList()
+                //)
+                //.Where(kvp => kvp.Key == "有图标")
+                //.SelectMany(kvp => kvp.Value)
                 .Select(f => new { File = f, Score = CalculateScore(f, kl)})
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.File.FullPath)
