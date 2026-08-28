@@ -19,7 +19,7 @@ namespace QiDian
 {
     public class SearchViewModel : ReactiveObject, IDisposable
     {
-        private readonly EverythingSearchService _everything = new();
+        private EverythingSearchService _everything;
         private CancellationTokenSource? _searchCts;
         private System.Timers.Timer? _searchTimer;
 
@@ -84,9 +84,9 @@ namespace QiDian
         [Reactive]
         public int RecentTotalCount { get; set; }
 
-        public SearchViewModel()
+        public SearchViewModel(EverythingSearchService everything)
         {
-
+            _everything = everything;
             // 第二层：预留固定内容（演示占位，后续自行替换）
             FixedItems = new ObservableCollection<FixedEntry>
             {
@@ -177,7 +177,16 @@ namespace QiDian
             try
             {
                 var sw = Stopwatch.StartNew();
-                await Task.Run(() => SearchRecent(keyword), token);
+                if (keyword.EndsWith("-d"))
+                {
+                    await Task.Run(() => { SearhByEveryThing(keyword); }, token);
+                }
+                else
+                {
+                    await Task.Run(() => { SearchRecent(keyword); }, token);
+                }
+
+
                 sw.Stop();
 
                 if (!token.IsCancellationRequested)
@@ -216,6 +225,13 @@ namespace QiDian
             RecentTotalCount = result.Count;
         }
 
+        private void SearhByEveryThing(string keyword)
+        {
+            string k = keyword.Split(" ")[0];
+            var results = _everything.SearchByEveryThing(k,100);
+
+            _recentAll = results;
+        }
         #endregion
 
         public void Reset()

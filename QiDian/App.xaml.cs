@@ -7,6 +7,7 @@ using QiDian.Contracts;
 using QiDian.Services;
 using QiDian.ViewModels;
 using Zhou.CrawlerAdapter.DependencyInjection;
+using Zhou.LevelDB.DependencyInjection;
 
 namespace QiDian
 {
@@ -149,6 +150,7 @@ namespace QiDian
             services.AddSingleton<NavigationService>();
             services.AddSingleton<IWindowSwitcherService, WindowSwitcherService>();
             services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
+            services.AddSingleton<EverythingSearchService>();
 
             // --- 窗口 ---
             services.AddSingleton<NavWindow>();
@@ -164,6 +166,13 @@ namespace QiDian
             services.AddCrawlerAdapter(options =>
             {
                 options.Headless = true;
+            });
+
+            services.AddLevelDB(options =>
+            {
+                options.UseAppData = true;
+                options.DirName = "ldb";
+                options.DatabaseName = "qidian";
             });
         }
 

@@ -39,6 +39,12 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+		<Reference Include="Zhou.LevelDB">
+			<HintPath>bin\Debug\net8.0-windows\Zhou.LevelDB.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
 	<!-- 复制到输出目录 -->
 	<ItemGroup>
 		<Content Include="Resources\**\*">

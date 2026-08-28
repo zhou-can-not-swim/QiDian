@@ -16,12 +16,11 @@ namespace QiDian
         private SearchViewModel _viewModel;
         private readonly IWindowSwitcherService _windowSwitcher;
 
-        public SearchWindow(IWindowSwitcherService windowSwitcher)
+        public SearchWindow(IWindowSwitcherService windowSwitcher,EverythingSearchService e)
         {
             InitializeComponent();
             // 初始化 ViewModel（同时赋给 ViewModel 依赖属性，触发 DataContext 自动配置）
-            ViewModel = _viewModel = new SearchViewModel();
-
+            ViewModel = _viewModel = new SearchViewModel(e);
             this.WhenActivated(d =>
             {
                 this.Bind(ViewModel, vm => vm.SearchKeyword, v => v.SearchTextBox.Text).DisposeWith(d);
