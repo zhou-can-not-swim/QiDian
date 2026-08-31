@@ -8,6 +8,7 @@ using QiDian.Services;
 using QiDian.ViewModels;
 using Zhou.CrawlerAdapter.DependencyInjection;
 using Zhou.LevelDB.DependencyInjection;
+using QiDian.Services.SearchLogic;
 
 namespace QiDian
 {
@@ -23,6 +24,7 @@ namespace QiDian
         {
             base.OnStartup(e);
 
+            Task.Run(StaticStartMenuFiles.InitStartMenuFiles);
             // 发现导航插件（在 IHost 构建前，以便把插件类型注册进 DI）
             var pluginsDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Navs");
             var modules = NavPluginLoader.LoadModules(pluginsDir);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using QiDian.Models;
 using QiDian.Services;
+using QiDian.Services.SearchLogic;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Reactive.Disposables;

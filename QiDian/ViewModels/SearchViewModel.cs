@@ -1,6 +1,6 @@
 ﻿using DynamicData;
 using QiDian.Models;
-using QiDian.Services;
+using QiDian.Services.SearchLogic;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
@@ -211,14 +211,10 @@ namespace QiDian
 
         private void SearchRecent(string keyword)
         {
-            string startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
-            string programsDir = System.IO.Path.Combine(startMenu, "Programs");
 
-            var result = Directory.EnumerateFiles(programsDir, "*lnk", SearchOption.AllDirectories)
+            var result = StaticStartMenuFiles.UnionFiles
                 .Where(f => string.IsNullOrWhiteSpace(keyword)
-                            || System.IO.Path.GetFileNameWithoutExtension(f)
-                                .Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                .Select(f => new FileEntry { FullPath = f })
+                            || f.FileName.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             _recentAll = result;

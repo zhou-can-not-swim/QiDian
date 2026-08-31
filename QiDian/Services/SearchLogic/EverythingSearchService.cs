@@ -8,7 +8,7 @@ using System.IO;
 using QiDian.Helpers.LevelDBHelper;
 using QiDian.Models;
 
-namespace QiDian.Services
+namespace QiDian.Services.SearchLogic
 {
     /// <summary>
     /// 智能 Everything 搜索服务 - 支持动态匹配、缩写展开、拼音首字母
