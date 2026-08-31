@@ -309,16 +309,9 @@ namespace QiDian
             // 自动选中第一项，保证 Enter / 双击可直接打开（否则 SelectedItem 为 null 时无反应）
             SelectedFile ??= RecentItems.FirstOrDefault();
 
-            // 后台线程异步提取图标（不阻塞 UI，数据量多时也不会卡死）
             StartIconLoadingAsync();
         }
 
-        /// <summary>
-        /// 后台线程异步提取未加载的图标：提取完成后通过绑定自动刷新界面。
-        /// 图标提取（ExtractAssociatedIcon）开销大，绝不能在 UI 线程同步做；
-        /// 且必须攒批后一次性在 UI 线程赋值，避免大量跨线程 PropertyChanged
-        /// 更新风暴导致展开瞬间卡顿。
-        /// </summary>
         private void StartIconLoadingAsync()
         {
             // 防重入：同一批数据正在提取时不重复启动（否则展开/折叠/搜索会叠加多轮并发提取）
@@ -332,11 +325,11 @@ namespace QiDian
 
             Task.Run(() =>
             {
-                var batch = new List<(FileEntry Item, ImageSource Icon)>(BatchSize);
+                var batch = new List<(FileEntry Item, ImageSource Icon)>(RecentRowCapacity);
                 foreach (var item in pending)
                 {
                     batch.Add((item, QiDian.Converters.FilePathToIconConverter.ExtractIcon(item.FullPath)));
-                    if (batch.Count >= BatchSize)
+                    if (batch.Count >= RecentRowCapacity)
                     {
                         FlushIconBatch(dispatcher, batch);
                         batch.Clear();
