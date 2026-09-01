@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
-using QiDian.Helpers.LevelDBHelper;
 using QiDian.Models;
 
 namespace QiDian.Services.SearchLogic
@@ -39,11 +38,11 @@ namespace QiDian.Services.SearchLogic
         [DllImport("Everything64.dll")]
         private static extern bool Everything_GetResultDateModified(int nIndex, out long lpDateModified);
 
-        private static readonly LevelDbStore _store = new LevelDbStore();
+        //private static readonly LevelDbStore _store = new LevelDbStore();
         public static void RecordUserChoice(string key, string fullPath)
         {
             if (string.IsNullOrWhiteSpace(fullPath)) return;
-            _store.RecordUsage(key, fullPath);
+            //_store.RecordUsage(key, fullPath);
         }
 
         private static bool? _available;
