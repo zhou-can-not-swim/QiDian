@@ -75,22 +75,22 @@ namespace QiDian
             public string Description { get; }
         }
 
-        /// <summary>折叠时第一行可容纳的图标数量（窗口 800px 宽，约 8 个）</summary>
         private const int RecentRowCapacity = 9;
+        private const int RecentExpandedRows = 3;
+        private const int RecentPageSize = RecentExpandedRows * RecentRowCapacity;
 
-        /// <summary>列表分批填充/图标批量更新的批次大小（每批在 UI 线程一次完成，避免卡顿）</summary>
-        private const int BatchSize = 24;
+        /// <summary>图标批量更新的批次大小</summary>
+        private const int BatchSize = 27;
 
         /// <summary>当前搜索的全部结果（折叠时界面只显示第一行）</summary>
         private List<FileEntry> _recentAll = new();
 
-        /// <summary>分批填充最近使用列表用的定时器（展开大量数据时渐进渲染，避免一次性创建全部容器卡顿）</summary>
-        private DispatcherTimer? _recentFillTimer;
+        /// <summary>当前翻页页码（展开时生效，0 起；每页固定 RecentPageSize 个格子，内容整页替换）</summary>
+        private int _recentPageIndex;
 
-        /// <summary>正在后台提取图标的来源集合（防重入：同一批数据不重复启动多轮提取）</summary>
-        private List<FileEntry>? _iconLoadingSource;
+        /// <summary>正在预提取图标的来源集合（防重入：同一批数据只预提取一轮，数据变化后允许新一轮）</summary>
+        private List<FileEntry>? _iconPrefetchSource;
 
-        /// <summary>全部结果数量（标题栏计数显示）</summary>
         [Reactive]
         public int RecentTotalCount { get; set; }
 
@@ -132,6 +132,7 @@ namespace QiDian
 
         }
 
+        #region 打开文件
         private void OpenSelectedFile()
         {
             if (SelectedFile == null) return;
@@ -152,6 +153,8 @@ namespace QiDian
         {
             Task.Run(()=> OpenSelectedFile());
         }
+        #endregion
+
         #region search
         private void ScheduleSearch(string obj)
         {
@@ -242,108 +245,114 @@ namespace QiDian
         }
         #endregion
 
-        public void Reset()
-        {
-
-            _searchCts?.Cancel();
-            _searchTimer?.Stop();
-            SearchKeyword = "";
-            SearchRecent(""); //获取数据
-            RebuildRecentItems();//构建王网格图
-            HasSearched = false;
-            IsSearching = false;
-            // 每次打开回到默认状态：第一层只显示第一行，第二层折叠
-            IsRecentExpanded = false;
-            IsFixedExpanded = false;
-        }
-
         private void RebuildRecentItems()
         {
-            // 停止上一轮渐进填充（若用户在填充过程中再次搜索/展开，避免旧批次混入新集合）
-            _recentFillTimer?.Stop();
-            _recentFillTimer = null;
-
-            var items = IsRecentExpanded ? _recentAll : _recentAll.Take(RecentRowCapacity).ToList();
-
-            // 分批填充：首帧只创建一小批容器立即响应，剩余每帧渐进加入，
-            // 避免展开大量数据时一次性模板化全部容器导致明显卡顿。
-            RecentItems.Clear();
-            foreach (var f in items.Take(BatchSize))
-                RecentItems.Add(f);
-
-            var rest = items.Skip(BatchSize).ToList();
-            if (rest.Count > 0)
-            {
-                var timer = new DispatcherTimer(DispatcherPriority.Background)
-                {
-                    Interval = TimeSpan.FromMilliseconds(2)
-                };
-                var index = 0;
-                timer.Tick += (_, _) =>
-                {
-                    var added = 0;
-
-                    while (index < rest.Count && added < BatchSize)//9次循环后跳出 //add =9
-                    {
-                        RecentItems.Add(rest[index++]);
-                        added++;
-                    }
-                    if (index >= rest.Count)
-                    {
-                        timer.Stop();
-                        _recentFillTimer = null;
-                    }
-
-                    //var takeFiles = rest.Skip((++added) * BatchSize).Take(BatchSize).ToList();
-                    //RecentItems.AddRange(takeFiles);
-                    //if (takeFiles.Count<BatchSize)
-                    //{
-                    //    timer.Stop();
-                    //    _recentFillTimer = null;
-                    //}
-                };
-                _recentFillTimer = timer;
-                timer.Start();
-            }
+            _recentPageIndex = 0;
+            FillCurrentPage();
 
             // 自动选中第一项，保证 Enter / 双击可直接打开（否则 SelectedItem 为 null 时无反应）
             SelectedFile ??= RecentItems.FirstOrDefault();
 
-            StartIconLoadingAsync();
+            // 后台线程异步提取图标（只处理当前页的项，不阻塞 UI）
+            StartIconPrefetchAsync();
         }
 
-        private void StartIconLoadingAsync()
+        /// <summary>
+        /// 填充当前页码的数据
+        /// </summary>
+        private void FillCurrentPage()
         {
-            // 防重入：同一批数据正在提取时不重复启动（否则展开/折叠/搜索会叠加多轮并发提取）
-            if (ReferenceEquals(_iconLoadingSource, _recentAll)) return;
+            int pageSize = IsRecentExpanded ? RecentPageSize : RecentRowCapacity;  //9
+            int start = IsRecentExpanded ? _recentPageIndex * RecentPageSize : 0;   //0
+            int count = Math.Min(pageSize, Math.Max(0, _recentAll.Count - start)); //pageSize 27
+
+            RecentItems.Clear();
+            for (int i = 0; i < count; i++)
+                RecentItems.Add(_recentAll[start + i]);
+        }
+
+        /// <summary>
+        /// 翻页
+        /// </summary>
+        public void TurnPage(int delta)
+        {
+            if (!IsRecentExpanded || delta == 0) return;
+            if (_recentAll.Count <= RecentPageSize) return; // 一页能装下，无需翻页
+
+            int maxPage = (_recentAll.Count - 1) / RecentPageSize; // 最后一页索引
+            int newIndex = Math.Clamp(_recentPageIndex + delta, 0, maxPage);
+            if (newIndex == _recentPageIndex) return; // 已在首页/末页
+
+            _recentPageIndex = newIndex;
+            FillCurrentPage();
+
+            // 翻页后选中新页第一项，便于 Enter / 双击直接打开
+            SelectedFile = RecentItems.FirstOrDefault();
+
+            // 新页的图标异步提取（已提取过的项直接命中缓存）
+            StartIconPrefetchAsync();
+        }
+
+         #region 提取图标
+
+        private void StartIconPrefetchAsync()
+        {
+            // 防重入：同一批数据只启动一轮预提取（数据变化后才允许新一轮）
+            if (ReferenceEquals(_iconPrefetchSource, _recentAll)) return;
 
             var pending = _recentAll.Where(f => f.Icon == null).ToList();
             if (pending.Count == 0) return;
 
-            _iconLoadingSource = _recentAll;
+            _iconPrefetchSource = _recentAll;
             var dispatcher = Application.Current?.Dispatcher;
+
+            var visiblePaths = RecentItems
+                .Where(f => f.Icon == null)
+                .Select(f => f.FullPath)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var firstPage = pending.Where(f => visiblePaths.Contains(f.FullPath)).ToList(); //9
+            var rest = pending.Where(f => !visiblePaths.Contains(f.FullPath)).ToList();     //238个
 
             Task.Run(() =>
             {
-                var batch = new List<(FileEntry Item, ImageSource Icon)>(RecentRowCapacity);
-                foreach (var item in pending)
+                try
+                {
+                    ExtractIcons(dispatcher, firstPage, RecentRowCapacity);
+                    ExtractIcons(dispatcher, rest, BatchSize);
+                }
+                finally
+                {
+                    dispatcher?.BeginInvoke(() => _iconPrefetchSource = null);
+                }
+            });
+        }
+
+        private static void ExtractIcons(Dispatcher? dispatcher, List<FileEntry> items, int batchSize)
+        {
+            if (items.Count == 0) return;
+
+            Task.Run(() =>
+            {
+                var batch = new List<(FileEntry Item, ImageSource Icon)>(batchSize);
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                foreach (var item in items)
                 {
                     batch.Add((item, QiDian.Converters.FilePathToIconConverter.ExtractIcon(item.FullPath)));
-                    if (batch.Count >= RecentRowCapacity)
+                    if (batch.Count >= BatchSize)
                     {
                         FlushIconBatch(dispatcher, batch);
                         batch.Clear();
                     }
                 }
-                if (batch.Count > 0)
+                stopwatch.Stop();
+                string v = stopwatch.ElapsedMilliseconds.ToString();
+                if (batch.Count > 0){
                     FlushIconBatch(dispatcher, batch);
-
-                // 回到 UI 线程解除防重入标记，允许数据变化后启动下一轮提取
-                dispatcher?.BeginInvoke(() => _iconLoadingSource = null);
+                }
             });
         }
 
-        /// <summary>将一批已提取的图标在 UI 线程批量赋值（避免逐项跨线程更新导致 UI 卡顿）</summary>
         private static void FlushIconBatch(Dispatcher? dispatcher, List<(FileEntry Item, ImageSource Icon)> batch)
         {
             if (dispatcher == null)
@@ -353,13 +362,21 @@ namespace QiDian
                 return;
             }
 
-            dispatcher.Invoke(() =>
+            try
             {
-                foreach (var (item, icon) in batch)
-                    item.Icon = icon;
-            });
+                dispatcher.Invoke(() =>
+                {
+                    foreach (var (item, icon) in batch)
+                        item.Icon = icon;
+                });
+            }
+            catch
+            {
+                // UI 线程关闭/繁忙期异常：忽略，不中断提取流程，避免漏掉本批图标
+            }
         }
 
+        #endregion
         public void ToggleRecentExpanded()
         {
             IsRecentExpanded = !IsRecentExpanded;

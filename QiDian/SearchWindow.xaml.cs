@@ -71,6 +71,17 @@ namespace QiDian
             }
         }
 
+        /// <summary>
+        /// 滚轮翻页（翻书效果）：向上滚上一页、向下滚下一页。
+        /// 27 个格子固定不变，内容整页替换，始终只渲染一页，降低进程内存。
+        /// </summary>
+        private void RecentListBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (_viewModel == null) return;
+            _viewModel.TurnPage(e.Delta > 0 ? -1 : 1);
+            e.Handled = true;
+        }
+
         private void RecentListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (RecentListBox.SelectedItem is FileEntry)
@@ -93,7 +104,17 @@ namespace QiDian
                     if (_viewModel.RecentItems.Count > 0)
                     {
                         int nextIndex = RecentListBox.SelectedIndex + 1;
-                        if (nextIndex < _viewModel.RecentItems.Count)
+                        if (nextIndex >= _viewModel.RecentItems.Count)
+                        {
+                            // 已到本页末尾：翻到下一页并选中第一项（键盘版翻页）
+                            _viewModel.TurnPage(1);
+                            if (_viewModel.RecentItems.Count > 0)
+                            {
+                                RecentListBox.SelectedIndex = 0;
+                                RecentListBox.ScrollIntoView(RecentListBox.SelectedItem);
+                            }
+                        }
+                        else
                         {
                             RecentListBox.SelectedIndex = nextIndex;
                             RecentListBox.ScrollIntoView(RecentListBox.SelectedItem);
@@ -108,7 +129,17 @@ namespace QiDian
                     if (_viewModel.RecentItems.Count > 0)
                     {
                         int prevIndex = RecentListBox.SelectedIndex - 1;
-                        if (prevIndex >= 0)
+                        if (prevIndex < 0)
+                        {
+                            // 已到本页开头：翻到上一页并选中最后一项（键盘版翻页）
+                            _viewModel.TurnPage(-1);
+                            if (_viewModel.RecentItems.Count > 0)
+                            {
+                                RecentListBox.SelectedIndex = _viewModel.RecentItems.Count - 1;
+                                RecentListBox.ScrollIntoView(RecentListBox.SelectedItem);
+                            }
+                        }
+                        else
                         {
                             RecentListBox.SelectedIndex = prevIndex;
                             RecentListBox.ScrollIntoView(RecentListBox.SelectedItem);

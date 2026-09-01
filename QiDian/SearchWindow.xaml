@@ -197,6 +197,7 @@
                                      Background="Transparent"
                                      BorderThickness="0"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     PreviewMouseWheel="RecentListBox_PreviewMouseWheel"
                                      SelectionChanged="RecentListBox_SelectionChanged"
                                      MouseDoubleClick="RecentListBox_MouseDoubleClick"
                                      Visibility="{Binding RecentItems, Converter={StaticResource CollectionEmptyVisConv}}">
