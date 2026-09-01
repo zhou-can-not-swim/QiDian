@@ -28,5 +28,9 @@ namespace QiDian.Models
         /// </summary>
         [Reactive]
         public ImageSource? Icon { get; set; }
+
+        [Reactive]
+        public string TruePath { get; set; }
+
     }
 }

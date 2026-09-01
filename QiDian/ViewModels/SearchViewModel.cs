@@ -234,7 +234,7 @@ namespace QiDian
                 var _levelDb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
                 var exist = _levelDb.GetByPrefix("st_");
                 var source = exist.Where(e => !string.IsNullOrEmpty(e.Key)).ToDictionary(kv => kv.Key, kv => JsonSerializer.Deserialize<FileEntry>(kv.Value));//数据库中有的数据列表
-                var result = source.Where(f => StringFuzzy.FuzzyMatch(f.Value!.FileName,keyword))//挑选出符合的key
+                var result = source.Where(f => SearchCommonLogic.FuzzyMatch(f.Value!.FileName,keyword))//挑选出符合的key
                 .Select(s => new FileEntry() { FileName1 = s.Key, FullPath = s.Value!.FullPath }).ToList();
 
                 _recentAll = result;

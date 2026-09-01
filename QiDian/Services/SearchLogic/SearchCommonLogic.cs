@@ -1,13 +1,15 @@
-﻿using System;
+﻿using IWshRuntimeLibrary;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace QiDian.Services.SearchLogic
 {
-    public class StringFuzzy
+    public class SearchCommonLogic
     {
         public static bool FuzzyMatch(string input, string searchTerm, bool ignoreCase = true)
         {
@@ -20,6 +22,22 @@ namespace QiDian.Services.SearchLogic
             string pattern = string.Join(".*", searchTerm.Select(c => Regex.Escape(c.ToString())));
             RegexOptions options = ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
             return Regex.IsMatch(input, pattern, options);
+        }
+
+        public static string ExeFilePath(string lnkFile)
+        {
+            try
+            {
+                WshShell shell = new WshShell();
+                IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(lnkFile);
+                string targetPath = shortcut.TargetPath;
+                return targetPath;
+            }
+            catch(Exception ex)
+            {
+                return "";
+            }
+
         }
     }
 }

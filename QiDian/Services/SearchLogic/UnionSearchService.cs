@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Shapes;
 using Zhou.LevelDB.Services;
 
 namespace QiDian.Services.SearchLogic
@@ -51,7 +52,11 @@ namespace QiDian.Services.SearchLogic
                 .Concat(CommonStartMenuFiles)
                 .GroupBy(u => u.Key)
                 .Select(u => u.First())
-                .ToDictionary(kv => kv.Key, kv => new FileEntry() { FileName1 = kv.Key, FullPath = kv.Value });
+                .ToDictionary(kv => kv.Key, kv => new FileEntry() { FileName1 = kv.Key, FullPath = kv.Value, TruePath = SearchCommonLogic.ExeFilePath(kv.Value) })
+                .Where(u => !string.IsNullOrEmpty(u.Value.TruePath))
+                .Where(u => System.IO.Path.GetExtension(u.Value.TruePath) == ".exe" ? true : false)
+                .ToDictionary();
+
             UnionSearchService.UnionMenuWithDB();
 
             return Task.CompletedTask;
