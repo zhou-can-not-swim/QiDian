@@ -1,5 +1,7 @@
 ﻿using DynamicData;
+using Microsoft.Extensions.DependencyInjection;
 using QiDian.Models;
+using QiDian.Services;
 using QiDian.Services.SearchLogic;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -12,10 +14,13 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Zhou.LevelDB.Services;
 
 namespace QiDian
 {
@@ -224,14 +229,18 @@ namespace QiDian
 
         private void SearchRecent(string keyword)
         {
+            using (var scope = AppServiceLocator.ServiceProvider!.CreateScope())
+            {
+                var _levelDb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
+                var exist = _levelDb.GetByPrefix("st_");
+                var source = exist.Where(e => !string.IsNullOrEmpty(e.Key)).ToDictionary(kv => kv.Key, kv => JsonSerializer.Deserialize<FileEntry>(kv.Value));//数据库中有的数据列表
+                var result = source.Where(f => StringFuzzy.FuzzyMatch(f.Value!.FileName,keyword))//挑选出符合的key
+                .Select(s => new FileEntry() { FileName1 = s.Key, FullPath = s.Value!.FullPath }).ToList();
 
-            var result = StaticStartMenuFiles.UnionFiles
-                .Where(f => string.IsNullOrWhiteSpace(keyword)
-                            || f.FileName.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            _recentAll = result;
-            RecentTotalCount = result.Count;
+                _recentAll = result;
+                RecentTotalCount = result.Count;
+            }
+  
         }
 
         private void SearhByEveryThing(string keyword)

@@ -24,7 +24,6 @@ namespace QiDian
         {
             base.OnStartup(e);
 
-            Task.Run(StaticStartMenuFiles.InitStartMenuFiles);
             // 发现导航插件（在 IHost 构建前，以便把插件类型注册进 DI）
             var pluginsDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Navs");
             var modules = NavPluginLoader.LoadModules(pluginsDir);
@@ -47,13 +46,13 @@ namespace QiDian
                 })
                 .Build();
             AppServiceLocator.Initialize(_host.Services);
+            _ = Task.Run(UnionSearchService.InitStartMenuFiles);
 
             // 把插件页面写入静态注册表（ViewKey → View/ViewModel 映射）
             foreach (var m in modules)
                 ViewModelRegistry.Register(m.ViewKey, m.ViewType, m.ViewModelType);
 
             await _host.StartAsync();
-
 
             InitializeTrayIcon();
             var mainWindow = _host.Services.GetRequiredService<SearchWindow>();

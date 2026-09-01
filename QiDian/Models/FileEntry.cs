@@ -12,7 +12,7 @@ namespace QiDian.Models
 
         [Reactive]
         public string FullPath { get; set; }
-
+        public string FileName1;
         public string FileName => Path.GetFileName(FullPath);
 
         public string Directory => Path.GetDirectoryName(FullPath);
