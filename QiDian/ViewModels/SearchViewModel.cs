@@ -149,7 +149,7 @@ namespace QiDian
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = SelectedFile.FullPath,
+                    FileName = SelectedFile.TruePath,
                     UseShellExecute = true  // 使用系统默认方式打开
                 });
             }
