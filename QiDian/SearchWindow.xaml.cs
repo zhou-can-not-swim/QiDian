@@ -37,6 +37,12 @@ namespace QiDian
                 DragMove();
             };
             _windowSwitcher = windowSwitcher;
+            this.Activated += MainWindow_Activated;
+        }
+
+        private void MainWindow_Activated(object sender, EventArgs e)
+        {
+            //窗口激活
         }
 
         private void SearchWindow_Deactivated(object sender, EventArgs e)
@@ -49,6 +55,8 @@ namespace QiDian
                     Hide();
                     ShowInTaskbar = false;
                 }
+                _viewModel.SearchRecent("");
+                _viewModel.RebuildRecentItems();
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 

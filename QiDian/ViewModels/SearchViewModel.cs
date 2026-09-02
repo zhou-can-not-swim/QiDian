@@ -149,9 +149,31 @@ namespace QiDian
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = SelectedFile.TruePath,
+                    FileName = SelectedFile.TruePath??SelectedFile.FullPath,
                     UseShellExecute = true  // 使用系统默认方式打开
                 });
+
+                using (var scope = AppServiceLocator.ServiceProvider!.CreateScope())
+                {
+                    var ldb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
+                    var f = new FileEntry
+                    {
+                        FullPath= SelectedFile.FullPath,
+                        FileName1= SelectedFile.FileName1,
+                        TruePath= SelectedFile.TruePath,
+                        Score = SelectedFile.Score+10,
+                        UsageCount= SelectedFile.UsageCount++,
+                        
+                    };
+
+                    ldb.Put($"st_{SelectedFile.FileName}", JsonSerializer.Serialize(f));
+                }
+                RxApp.MainThreadScheduler.Schedule(() =>
+                {
+
+                });
+
+
             }
             catch (Exception ex)
             {
@@ -231,19 +253,21 @@ namespace QiDian
             }
         }
 
-        private void SearchRecent(string keyword)
+        public void SearchRecent(string keyword)
         {
             using (var scope = AppServiceLocator.ServiceProvider!.CreateScope())
             {
                 var _levelDb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
                 var exist = _levelDb.GetByPrefix("st_");
                 var source = exist.Where(e => !string.IsNullOrEmpty(e.Key)).ToDictionary(kv => kv.Key, kv => JsonSerializer.Deserialize<FileEntry>(kv.Value));//数据库中有的数据列表
-                var result = source.Where(f => SearchCommonLogic.FuzzyMatch(f.Value!.FileName,keyword))//挑选出符合的key
-                .Select(s => new FileEntry() { FileName1 = s.Key, FullPath = s.Value!.FullPath,TruePath=s.Value!.TruePath }).ToList();
+                var result = source.Where(f => SearchCommonLogic.FuzzyMatch(f.Value!.FileName, keyword))//挑选出符合的key
+                .Select(s => new FileEntry() { FileName1 = s.Key, FullPath = s.Value!.FullPath, TruePath = s.Value!.TruePath ,Score = s.Value!.Score,UsageCount = s.Value!.UsageCount })
+                .OrderByDescending(s => s.Score)
+                .ToList();
 
                 _recentAll = result;
-                RecentTotalCount = result.Count;
-            }
+               RecentTotalCount = result.Count;
+           }
   
         }
 
@@ -258,7 +282,7 @@ namespace QiDian
         }
         #endregion
 
-        private void RebuildRecentItems()
+        public void RebuildRecentItems()
         {
             _recentPageIndex = 0;
             FillCurrentPage();

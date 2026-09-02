@@ -52,7 +52,7 @@ namespace QiDian.Services.SearchLogic
                 .Concat(CommonStartMenuFiles)
                 .GroupBy(u => u.Key)
                 .Select(u => u.First())
-                .ToDictionary(kv => kv.Key, kv => new FileEntry() { FileName1 = kv.Key, FullPath = kv.Value, TruePath = SearchCommonLogic.ExeFilePath(kv.Value) })
+                .ToDictionary(kv => kv.Key, kv => new FileEntry() { FileName1 = kv.Key, FullPath = kv.Value, TruePath = SearchCommonLogic.ExeFilePath(kv.Value), Score = 0 ,UsageCount=0})
                 .Where(u => !string.IsNullOrEmpty(u.Value.TruePath))
                 .Where(u => System.IO.Path.GetExtension(u.Value.TruePath) == ".exe" ? true : false)
                 .ToDictionary();
@@ -72,7 +72,7 @@ namespace QiDian.Services.SearchLogic
                 var _levelDb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
                 var exist = _levelDb.GetByPrefix(pre);
 
-                var peddings = UnionFiles.Where(kvp => !exist.ContainsKey(kvp.Key))
+                var peddings = UnionFiles.Where(kvp => !exist.ContainsKey($"{pre}_{kvp.Key}"))
                         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
                 _levelDb.Batch(batch =>
