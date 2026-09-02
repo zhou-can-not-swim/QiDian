@@ -90,6 +90,9 @@ namespace QiDian
         /// <summary>当前搜索的全部结果（折叠时界面只显示第一行）</summary>
         private List<FileEntry> _recentAll = new();
 
+        /// <summary>展开时用于补齐 27 格、保持 3 行布局稳定的占位项（空路径，不可打开、不参与图标提取）</summary>
+        private static readonly FileEntry PlaceholderEntry = new() { FullPath = "", FileName1 = "" };
+
         /// <summary>当前翻页页码（展开时生效，0 起；每页固定 RecentPageSize 个格子，内容整页替换）</summary>
         private int _recentPageIndex;
 
@@ -140,7 +143,8 @@ namespace QiDian
         #region 打开文件
         private void OpenSelectedFile()
         {
-            if (SelectedFile == null) return;
+            // 占位项（补齐 3 行布局的空格子）FullPath 为空，直接忽略
+            if (SelectedFile == null || string.IsNullOrEmpty(SelectedFile.FullPath)) return;
             try
             {
                 Process.Start(new ProcessStartInfo
@@ -271,13 +275,22 @@ namespace QiDian
         /// </summary>
         private void FillCurrentPage()
         {
-            int pageSize = IsRecentExpanded ? RecentPageSize : RecentRowCapacity;  //9
+            int pageSize = IsRecentExpanded ? RecentPageSize : RecentRowCapacity;  //27 或 9
             int start = IsRecentExpanded ? _recentPageIndex * RecentPageSize : 0;   //0
             int count = Math.Min(pageSize, Math.Max(0, _recentAll.Count - start)); //pageSize 27
 
             RecentItems.Clear();
             for (int i = 0; i < count; i++)
                 RecentItems.Add(_recentAll[start + i]);
+
+            // 展开时固定渲染 27 格（3行×9列）：数据不足用占位项补齐，
+            // 保证翻到末页只剩几个文件时布局也不会塌缩成一行。
+            // 无搜索结果（_recentAll 为空）时不补齐，让「未找到」空状态提示正常显示。
+            if (IsRecentExpanded && _recentAll.Count > 0)
+            {
+                for (int i = count; i < pageSize; i++)
+                    RecentItems.Add(PlaceholderEntry);
+            }
         }
 
         /// <summary>

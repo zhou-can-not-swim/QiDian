@@ -59,6 +59,7 @@
                                TextWrapping="Wrap"
                                TextTrimming="CharacterEllipsis"
                                MaxHeight="28"
+                               MinHeight="28"
                                MaxWidth="60"
                                Margin="0,5,0,0"/>
                 </StackPanel>
@@ -206,10 +207,12 @@
                                 <ListBox.Style>
                                     <Style TargetType="ListBox">
                                         <!-- 折叠 -->
+                                        <Setter Property="MinHeight" Value="102"/>
                                         <Setter Property="MaxHeight" Value="120"/>
                                         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsRecentExpanded}" Value="True">
+                                                <Setter Property="MinHeight" Value="306"/>
                                                 <Setter Property="MaxHeight" Value="310"/>
                                                 <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden"/>
                                             </DataTrigger>
@@ -244,6 +247,11 @@
                                                             <Trigger Property="IsSelected" Value="True">
                                                                 <Setter TargetName="Bd" Property="Background" Value="#E8F0FE"/>
                                                             </Trigger>
+                                                            <!-- 占位项（补齐 3 行布局的空格子）：不可选中/点击，弱化显示 -->
+                                                            <DataTrigger Binding="{Binding FullPath}" Value="">
+                                                                <Setter Property="IsEnabled" Value="False"/>
+                                                                <Setter Property="Opacity" Value="0"/>
+                                                            </DataTrigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
                                                 </Setter.Value>
