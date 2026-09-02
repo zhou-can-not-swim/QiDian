@@ -17,10 +17,6 @@ namespace QiDian.Models
 
         public string Directory => Path.GetDirectoryName(FullPath);
 
-
-        [Reactive]
-        public int UsageCount {  get; set; }
-
         /// <summary>
         /// 图标（后台线程异步提取后填充，null 时界面显示默认图标）。
         /// 注意：必须在后台线程用 FilePathToIconConverter.ExtractIcon 填充，
@@ -31,6 +27,12 @@ namespace QiDian.Models
 
         [Reactive]
         public string TruePath { get; set; }
+
+
+        [Reactive]
+        public double Score {  get; set; }
+        [Reactive]
+        public int UsageCount { get; set; }
 
     }
 }

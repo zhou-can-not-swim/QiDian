@@ -246,7 +246,7 @@ namespace QiDian
         private void SearhByEveryThing(string keyword)
         {
             string k = keyword.Split(" ")[0];
-            var results = _everything.Search(k,10000);
+            var results = _everything.Search(k, RecentPageSize);
 
             _recentAll = results;
             RecentTotalCount = results.Count;
