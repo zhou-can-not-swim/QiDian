@@ -29,6 +29,7 @@
 		<ProjectReference Include="..\QiDian.Nav.Home\QiDian.Nav.Home.csproj" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\QiDian.Nav.Settings\QiDian.Nav.Settings.csproj" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\QiDian.Nav.DM\QiDian.Nav.DM.csproj" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\QiDian.Nav.WebSitePage\QiDian.Nav.WebSitePage.csproj" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 

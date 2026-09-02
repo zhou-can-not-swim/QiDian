@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\QiDian.Contracts\QiDian.Contracts.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
+	</ItemGroup>
+
+	<!-- 构建后把插件 DLL+PDB 复制到主程序 Navs 文件夹（开发/发布走同一条动态加载路径） -->
+	<Target Name="CopyToNavs" AfterTargets="Build">
+		<PropertyGroup>
+			<NavsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\QiDian\bin\$(Configuration)\net8.0-windows\Navs'))</NavsDir>
+		</PropertyGroup>
+		<MakeDir Directories="$(NavsDir)" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(NavsDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(NavsDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+	</Target>
+
+</Project>
