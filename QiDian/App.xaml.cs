@@ -55,8 +55,8 @@ namespace QiDian
             await _host.StartAsync();
 
             InitializeTrayIcon();
-            //var mainWindow = _host.Services.GetRequiredService<SearchWindow>();
-            var mainWindow = _host.Services.GetRequiredService<NavWindow>();
+            var mainWindow = _host.Services.GetRequiredService<SearchWindow>();
+            //var mainWindow = _host.Services.GetRequiredService<NavWindow>();
             mainWindow.Show();
 
             // 初始化全局热键服务（切换窗口 / 隐藏窗口）
