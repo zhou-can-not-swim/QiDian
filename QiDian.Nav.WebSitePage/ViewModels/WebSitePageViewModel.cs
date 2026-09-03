@@ -27,6 +27,7 @@ namespace QiDian.Nav.WebSitePage.ViewModels
         public bool IsDrawerOpen { get; set; }
 
         public ReactiveCommand<Unit, Unit> AddWebSiteItem { get; }//打开网页
+        public ReactiveCommand<Unit, Unit> AddWebSiteTag { get; }//打开新增标签弹窗
 
         #region 新增网站弹窗（AddWebSite 打开，确认后写回 WebSiteItems.json）
 
@@ -58,6 +59,28 @@ namespace QiDian.Nav.WebSitePage.ViewModels
 
         #endregion
 
+        #region 新增标签弹窗（AddWebSiteTag 打开，确认后写回 WebSiteTag.json 并同步进各站点）
+
+        /// <summary>新增标签弹窗是否打开</summary>
+        [Reactive]
+        public bool IsTagOpen { get; set; }
+
+        /// <summary>弹窗表单：新标签显示文字</summary>
+        [Reactive]
+        public string NewTagName { get; set; } = "";
+
+        /// <summary>弹窗表单：拼接关键词（留空则回退用名称拼接跳转）</summary>
+        [Reactive]
+        public string NewTagKeyword { get; set; } = "";
+
+        /// <summary>确认新增标签（名称不为空时可用）</summary>
+        public ReactiveCommand<Unit, Unit> ConfirmTagCommand { get; }
+
+        /// <summary>取消/关闭新增标签弹窗</summary>
+        public ReactiveCommand<Unit, Unit> CancelTagCommand { get; }
+
+        #endregion
+
         public WebSitePageViewModel()
         {
             Detail = new WebSiteDetailViewModel();
@@ -74,6 +97,13 @@ namespace QiDian.Nav.WebSitePage.ViewModels
                 (name, url) => !string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(url));
             ConfirmAddCommand = ReactiveCommand.Create(ConfirmAddSite, canConfirm);
             CancelAddCommand = ReactiveCommand.Create(() => { IsAddOpen = false; });
+
+            AddWebSiteTag = ReactiveCommand.Create(() => AddTag());
+
+            var canConfirmTag = this.WhenAnyValue(x => x.NewTagName,
+                name => !string.IsNullOrWhiteSpace(name));
+            ConfirmTagCommand = ReactiveCommand.Create(ConfirmAddTag, canConfirmTag);
+            CancelTagCommand = ReactiveCommand.Create(() => { IsTagOpen = false; });
         }
 
         /// <summary>打开新增弹窗（重置表单 + 置可见）</summary>
@@ -92,6 +122,7 @@ namespace QiDian.Nav.WebSitePage.ViewModels
                 NewDescription?.Trim() ?? "",
                 string.IsNullOrWhiteSpace(NewIcon) ? "🌐" : NewIcon.Trim());
             Sites.Add(site);
+            ApplyTagsToSites(); // 新建站点也共用同一套全局快捷标签
             SaveWebSiteItems();
             IsAddOpen = false;
         }
@@ -103,6 +134,42 @@ namespace QiDian.Nav.WebSitePage.ViewModels
             NewUrl = "";
             NewDescription = "";
             NewIcon = "🌐";
+        }
+
+        /// <summary>打开新增标签弹窗（重置表单 + 置可见）</summary>
+        private void AddTag()
+        {
+            ResetTagForm();
+            IsTagOpen = true;
+        }
+
+        /// <summary>确认：构造 WebSiteTag 加入标签池、写回 WebSiteTag.json，并同步进所有站点的快捷入口</summary>
+        private void ConfirmAddTag()
+        {
+            var tagName = NewTagName?.Trim() ?? "";
+            if (string.IsNullOrEmpty(tagName)) return;
+
+            var tag = new WebSiteTag(tagName,
+                string.IsNullOrWhiteSpace(NewTagKeyword) ? null : NewTagKeyword.Trim());
+            Tags.Add(tag);
+            ApplyTagsToSites();
+            SaveWebSiteTags();
+            IsTagOpen = false;
+        }
+
+        /// <summary>把当前全局标签池同步给每个站点（各站点快捷入口显示同一套标签）</summary>
+        private void ApplyTagsToSites()
+        {
+            var tags = Tags.ToList();
+            foreach (var site in Sites)
+                site.Tags = tags;
+        }
+
+        /// <summary>重置标签弹窗表单（供每次打开时调用）</summary>
+        private void ResetTagForm()
+        {
+            NewTagName = "";
+            NewTagKeyword = "";
         }
 
         public void OpenDrawer(WebSiteItem site)
@@ -181,6 +248,17 @@ namespace QiDian.Nav.WebSitePage.ViewModels
             Directory.CreateDirectory(dir);
             var fPath = Path.Combine(dir, "WebSiteItems.json");
             string json = System.Text.Json.JsonSerializer.Serialize(Sites.ToList(),
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(fPath, json);
+        }
+
+        /// <summary>把当前标签池整体写回 WebSiteTag.json（新增标签后调用）</summary>
+        public void SaveWebSiteTags()
+        {
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian");
+            Directory.CreateDirectory(dir);
+            var fPath = Path.Combine(dir, "WebSiteTag.json");
+            string json = System.Text.Json.JsonSerializer.Serialize(Tags.ToList(),
                 new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(fPath, json);
         }

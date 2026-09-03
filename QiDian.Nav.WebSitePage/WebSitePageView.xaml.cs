@@ -2,7 +2,6 @@
 using QiDian.Nav.WebSitePage.ViewModels;
 using ReactiveUI;
 using System.ComponentModel;
-using System.Reactive;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -53,64 +52,85 @@ namespace QiDian.Nav.WebSitePage
             }
             else if (e.PropertyName == nameof(WebSitePageViewModel.IsAddOpen))
             {
-                AnimateAddLayer(ViewModel?.IsAddOpen == true);
+                AnimateOverlay(AddSiteLayer, ViewModel?.IsAddOpen == true, NewNameBox,
+                    () => ViewModel?.IsAddOpen == true);
+            }
+            else if (e.PropertyName == nameof(WebSitePageViewModel.IsTagOpen))
+            {
+                AnimateOverlay(AddTagLayer, ViewModel?.IsTagOpen == true, NewTagNameBox,
+                    () => ViewModel?.IsTagOpen == true);
             }
         }
 
-        /// <summary>淡入/淡出新增弹窗层，打开时把焦点交给名称输入框</summary>
-        private void AnimateAddLayer(bool open)
+        /// <summary>淡入/淡出对话框覆盖层，打开时把焦点交给首个输入框</summary>
+        private void AnimateOverlay(Grid layer, bool open, TextBox? focusBox, Func<bool> isOpenNow)
         {
             if (open)
             {
-                AddSiteLayer.Visibility = Visibility.Visible;
-                var fadeIn = new DoubleAnimation(AddSiteLayer.Opacity, 1, TimeSpan.FromMilliseconds(150))
+                layer.Visibility = Visibility.Visible;
+                var fadeIn = new DoubleAnimation(layer.Opacity, 1, TimeSpan.FromMilliseconds(150))
                 {
                     EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                 };
-                AddSiteLayer.BeginAnimation(OpacityProperty, fadeIn);
+                layer.BeginAnimation(OpacityProperty, fadeIn);
 
                 // 等层布局完成后再聚焦，确保输入框可接收键盘
-                Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
-                {
-                    NewNameBox.Focus();
-                    NewNameBox.SelectAll();
-                }));
+                if (focusBox != null)
+                    Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+                    {
+                        focusBox.Focus();
+                        focusBox.SelectAll();
+                    }));
             }
             else
             {
-                var fadeOut = new DoubleAnimation(AddSiteLayer.Opacity, 0, TimeSpan.FromMilliseconds(120))
+                var fadeOut = new DoubleAnimation(layer.Opacity, 0, TimeSpan.FromMilliseconds(120))
                 {
                     EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
                 };
                 fadeOut.Completed += (_, _) =>
                 {
                     // 淡出期间若又被打开，则不要隐藏
-                    if (ViewModel?.IsAddOpen != true)
-                        AddSiteLayer.Visibility = Visibility.Collapsed;
+                    if (!isOpenNow())
+                        layer.Visibility = Visibility.Collapsed;
                 };
-                AddSiteLayer.BeginAnimation(OpacityProperty, fadeOut);
+                layer.BeginAnimation(OpacityProperty, fadeOut);
             }
         }
 
-        /// <summary>弹窗内快捷键：回车确认新增，Esc 取消（多行简介里回车不拦截）</summary>
+        /// <summary>网站弹窗快捷键：回车确认，Esc 取消</summary>
         private void AddSiteLayer_KeyDown(object sender, KeyEventArgs e)
         {
-            if (ViewModel is not { } vm) return;
+            if (ViewModel is { } vm)
+                HandleDialogKey(e, vm.CancelAddCommand, vm.ConfirmAddCommand);
+        }
 
-            // 多行简介输入框内回车是换行，不作为确认
+        /// <summary>标签弹窗快捷键：回车确认，Esc 取消</summary>
+        private void AddTagLayer_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (ViewModel is { } vm)
+                HandleDialogKey(e, vm.CancelTagCommand, vm.ConfirmTagCommand);
+        }
+
+        /// <summary>对话框通用快捷键处理（多行输入框内回车不拦截）</summary>
+        private static void HandleDialogKey(KeyEventArgs e, ICommand cancel, ICommand confirm)
+        {
             if (e.OriginalSource is TextBox { AcceptsReturn: true }) return;
 
             switch (e.Key)
             {
                 case Key.Escape:
-                    e.Handled = true;
-                    vm.CancelAddCommand.Execute(Unit.Default).Subscribe();
-                    break;
-                case Key.Enter:
-                    if (((ICommand)vm.ConfirmAddCommand).CanExecute(null))
+                    if (cancel.CanExecute(null))
                     {
                         e.Handled = true;
-                        vm.ConfirmAddCommand.Execute(Unit.Default).Subscribe();
+                        cancel.Execute(null);
+                    }
+                    break;
+                case Key.Enter:
+                    if (confirm.CanExecute(null))
+                    {
+                        e.Handled = true;
+                        confirm.Execute(null);
                     }
                     break;
             }

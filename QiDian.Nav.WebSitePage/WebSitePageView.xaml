@@ -135,12 +135,17 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            VerticalAlignment="Center"/>
-                <Button Content="新增网站"
-                           FontSize="12"
-                           Foreground="{DynamicResource PinkBrush}"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center"
-                           Command="{Binding AddWebSiteItem}"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="新增网站"
+                            FontSize="12"
+                            Foreground="{DynamicResource PinkBrush}"
+                            Command="{Binding AddWebSiteItem}"/>
+                    <Button Content="新增标签"
+                            FontSize="12"
+                            Foreground="{DynamicResource PinkBrush}"
+                            Margin="16,0,0,0"
+                            Command="{Binding AddWebSiteTag}"/>
+                </StackPanel>
             </DockPanel>
 
             <!-- 网站列表（竖排：每行左侧显示网站名 + 链接） -->
@@ -259,18 +264,18 @@
                     </DockPanel>
 
                     <!-- 名称 -->
-                    <TextBlock Text="名称（必填）" Style="{StaticResource AddDialogLabel}"/>
+                    <TextBlock Text="名称" Style="{StaticResource AddDialogLabel}"/>
                     <TextBox x:Name="NewNameBox"
                              Style="{StaticResource AddDialogInput}"
                              Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- 网址 -->
-                    <TextBlock Text="网址（必填）" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
+                    <TextBlock Text="网址" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
                     <TextBox Style="{StaticResource AddDialogInput}"
                              Text="{Binding NewUrl, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- 简介 -->
-                    <TextBlock Text="简介（可选）" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
+                    <TextBlock Text="简介" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
                     <TextBox Style="{StaticResource AddDialogInput}"
                              Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}"
                              AcceptsReturn="True" TextWrapping="Wrap"
@@ -279,7 +284,7 @@
                              VerticalScrollBarVisibility="Auto"/>
 
                     <!-- 图标 -->
-                    <TextBlock Text="图标（可选，填 emoji 如 🌐 或 🎬）" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
+                    <TextBlock Text="图标" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
                     <TextBox Style="{StaticResource AddDialogInput}"
                              Text="{Binding NewIcon, UpdateSourceTrigger=PropertyChanged}"/>
 
@@ -295,6 +300,68 @@
                                 Background="{DynamicResource PinkBrush}"
                                 Padding="28,9"
                                 Command="{Binding ConfirmAddCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============ 新增标签弹窗（覆盖式模态，置于最上层） ============ -->
+        <Grid x:Name="AddTagLayer"
+              Visibility="Collapsed"
+              Opacity="0"
+              Focusable="True"
+              KeyDown="AddTagLayer_KeyDown"
+              Background="Transparent">
+            <!-- 半透明遮罩，挡住下层交互 -->
+            <Rectangle Fill="#66000000"/>
+
+            <!-- 居中卡片 -->
+            <Border Width="400"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="24,18,24,20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="24" ShadowDepth="6" Direction="270"
+                                      Opacity="0.35" Color="#000000"/>
+                </Border.Effect>
+
+                <StackPanel>
+                    <!-- 标题行 -->
+                    <DockPanel Margin="0,0,0,16">
+                        <Button DockPanel.Dock="Right" Content="✕" FontSize="14"
+                                Style="{StaticResource AddCloseButton}"
+                                Command="{Binding CancelTagCommand}"/>
+                        <TextBlock Text="新增标签" FontSize="17" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <!-- 名称 -->
+                    <TextBlock Text="名称" Style="{StaticResource AddDialogLabel}"/>
+                    <TextBox x:Name="NewTagNameBox"
+                             Style="{StaticResource AddDialogInput}"
+                             Text="{Binding NewTagName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- 关键词（留空则用名称拼接） -->
+                    <TextBlock Text="关键词" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
+                    <TextBox Style="{StaticResource AddDialogInput}"
+                             Text="{Binding NewTagKeyword, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- 底部按钮 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+                        <Button Content="取消"
+                                Style="{StaticResource AddGhostButton}"
+                                Padding="20,9"
+                                Margin="0,0,10,0"
+                                Command="{Binding CancelTagCommand}"/>
+                        <Button Content="新增"
+                                Style="{StaticResource AddPrimaryButton}"
+                                Background="{DynamicResource PinkBrush}"
+                                Padding="28,9"
+                                Command="{Binding ConfirmTagCommand}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
