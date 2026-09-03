@@ -2,11 +2,13 @@
 using QiDian.Nav.WebSitePage.ViewModels;
 using ReactiveUI;
 using System.ComponentModel;
+using System.Reactive;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 
 namespace QiDian.Nav.WebSitePage
 {
@@ -48,6 +50,69 @@ namespace QiDian.Nav.WebSitePage
             if (e.PropertyName == nameof(WebSitePageViewModel.IsDrawerOpen))
             {
                 AnimateDrawer(ViewModel?.IsDrawerOpen == true);
+            }
+            else if (e.PropertyName == nameof(WebSitePageViewModel.IsAddOpen))
+            {
+                AnimateAddLayer(ViewModel?.IsAddOpen == true);
+            }
+        }
+
+        /// <summary>淡入/淡出新增弹窗层，打开时把焦点交给名称输入框</summary>
+        private void AnimateAddLayer(bool open)
+        {
+            if (open)
+            {
+                AddSiteLayer.Visibility = Visibility.Visible;
+                var fadeIn = new DoubleAnimation(AddSiteLayer.Opacity, 1, TimeSpan.FromMilliseconds(150))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                AddSiteLayer.BeginAnimation(OpacityProperty, fadeIn);
+
+                // 等层布局完成后再聚焦，确保输入框可接收键盘
+                Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+                {
+                    NewNameBox.Focus();
+                    NewNameBox.SelectAll();
+                }));
+            }
+            else
+            {
+                var fadeOut = new DoubleAnimation(AddSiteLayer.Opacity, 0, TimeSpan.FromMilliseconds(120))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+                };
+                fadeOut.Completed += (_, _) =>
+                {
+                    // 淡出期间若又被打开，则不要隐藏
+                    if (ViewModel?.IsAddOpen != true)
+                        AddSiteLayer.Visibility = Visibility.Collapsed;
+                };
+                AddSiteLayer.BeginAnimation(OpacityProperty, fadeOut);
+            }
+        }
+
+        /// <summary>弹窗内快捷键：回车确认新增，Esc 取消（多行简介里回车不拦截）</summary>
+        private void AddSiteLayer_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (ViewModel is not { } vm) return;
+
+            // 多行简介输入框内回车是换行，不作为确认
+            if (e.OriginalSource is TextBox { AcceptsReturn: true }) return;
+
+            switch (e.Key)
+            {
+                case Key.Escape:
+                    e.Handled = true;
+                    vm.CancelAddCommand.Execute(Unit.Default).Subscribe();
+                    break;
+                case Key.Enter:
+                    if (((ICommand)vm.ConfirmAddCommand).CanExecute(null))
+                    {
+                        e.Handled = true;
+                        vm.ConfirmAddCommand.Execute(Unit.Default).Subscribe();
+                    }
+                    break;
             }
         }
 
