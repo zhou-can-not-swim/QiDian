@@ -13,6 +13,8 @@
                 <ResourceDictionary Source="ScrollBars.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
+        
+        
     </UserControl.Resources>
 
     <Grid ClipToBounds="True">
@@ -32,11 +34,12 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            VerticalAlignment="Center"/>
-                <TextBlock Text="点击站点查看详情"
+                <Button Content="新增网站"
                            FontSize="12"
-                           Foreground="{DynamicResource TextMutedBrush}"
+                           Foreground="{DynamicResource PinkBrush}"
                            HorizontalAlignment="Right"
-                           VerticalAlignment="Center"/>
+                           VerticalAlignment="Center"
+                           Command="{Binding AddWebSiteItem}"/>
             </DockPanel>
 
             <!-- 网站列表（竖排：每行左侧显示网站名 + 链接） -->
@@ -116,7 +119,7 @@
                                   Opacity="0.28" Color="#000000"/>
             </Border.Effect>
             <local:WebSiteDetailView x:Name="DetailView"
-                                     Site="{Binding SelectedSite}"
+                                     ViewModel="{Binding DataContext.Detail, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                      CloseRequested="DetailView_CloseRequested"/>
         </Border>
     </Grid>

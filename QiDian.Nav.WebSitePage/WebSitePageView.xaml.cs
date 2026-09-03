@@ -18,6 +18,7 @@ namespace QiDian.Nav.WebSitePage
 
         private WebSitePageViewModel? _attachedVm;
 
+
         public WebSitePageView()
         {
             InitializeComponent();

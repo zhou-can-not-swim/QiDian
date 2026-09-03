@@ -2,47 +2,56 @@ using QiDian.Contracts;
 using QiDian.Nav.WebSitePage.Models;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Security.Policy;
 
 namespace QiDian.Nav.WebSitePage.ViewModels
 {
-    /// <summary>父 ViewModel：管理网站列表与选中项，抽屉开关随选中自动打开</summary>
+    /// <summary>父 ViewModel：管理网站列表与选中项，把选中站点喂给抽屉详情 VM 并控制抽屉开关</summary>
     public class WebSitePageViewModel : ViewModelBase
-    {
-        /// <summary>网站列表（后续可改为从配置/数据库加载）</summary>
+    { 
         public ObservableCollection<WebSiteItem> Sites { get; } = new();
+        public ObservableCollection<WebSiteTag> Tags { get; } = new();
 
-        private WebSiteItem? _selectedSite;
+        /// <summary>抽屉详情 VM（Drawer 内 WebSiteDetailView 绑定它）</summary>
+        public WebSiteDetailViewModel Detail { get; }
 
-        /// <summary>当前选中的网站（父 View 通过绑定传给抽屉子控件）</summary>
-        public WebSiteItem? SelectedSite
-        {
-            get => _selectedSite;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _selectedSite, value);
-                if (value != null) IsDrawerOpen = true; // 选中即滑出抽屉
-            }
-        }
+        [Reactive]
+        public WebSiteItem? SelectedSite { get; set; }
 
-        /// <summary>抽屉是否打开（View 监听此属性执行滑入/滑出动画）</summary>
         [Reactive]
         public bool IsDrawerOpen { get; set; }
 
+        public ReactiveCommand<Unit, Unit> AddWebSiteItem { get; }//打开网页
+
+
+
         public WebSitePageViewModel()
         {
-            Sites.Add(new WebSiteItem("GitHub", "https://github.com", "全球最大的代码托管与开源社区", "🐙"));
-            Sites.Add(new WebSiteItem("Gitee", "https://gitee.com", "国内代码托管平台（码云）", "🦋"));
-            Sites.Add(new WebSiteItem("Stack Overflow", "https://stackoverflow.com", "程序员问答社区", "🧑‍💻"));
-            Sites.Add(new WebSiteItem(".NET 文档", "https://learn.microsoft.com/zh-cn/dotnet/", "微软官方 .NET 技术文档", "📘"));
-            Sites.Add(new WebSiteItem("MDN Web Docs", "https://developer.mozilla.org/zh-CN/", "Web 前端权威参考", "🌐"));
-            Sites.Add(new WebSiteItem("掘金", "https://juejin.cn", "中文技术社区与博客", "⛏️"));
-            Sites.Add(new WebSiteItem("菜鸟教程", "https://www.runoob.com", "编程入门教程", "🐤"));
-            Sites.Add(new WebSiteItem("LeetCode", "https://leetcode.cn", "算法刷题与面试准备", "💻"));
-            Sites.Add(new WebSiteItem("ProcessOn", "https://www.processon.com", "在线流程图 / 思维导图", "🧩"));
-            Sites.Add(new WebSiteItem("腾讯文档", "https://docs.qq.com", "在线协作文档与表格", "📄"));
-            Sites.Add(new WebSiteItem("百度翻译", "https://fanyi.baidu.com", "在线翻译", "🌏"));
-            Sites.Add(new WebSiteItem("DeepL", "https://www.deepl.com/translator", "高质量在线翻译", "🪄"));
+            Detail = new WebSiteDetailViewModel();
+            InitDatas();
+
+            this.WhenAnyValue(x => x.SelectedSite)
+               .Where(site => site != null)
+               .ObserveOn(RxApp.MainThreadScheduler)
+               .Subscribe(site => OpenDrawer(site!));
+
+            AddWebSiteItem = ReactiveCommand.Create(() => AddWebSite());
+        }
+
+        private void AddWebSite()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OpenDrawer(WebSiteItem site)
+        {
+            Detail.Site = site;
+            IsDrawerOpen = true;
         }
 
         /// <summary>关闭抽屉</summary>
@@ -55,7 +64,58 @@ namespace QiDian.Nav.WebSitePage.ViewModels
         public void SelectSite(WebSiteItem site)
         {
             SelectedSite = site;
-            IsDrawerOpen = true;
+            OpenDrawer(site);
         }
+
+        #region 初始化数据
+        private void InitDatas()
+        {
+            List<WebSiteItem> ws = ReadWebSiteItems();
+            List<WebSiteTag> wts = ReadWebSiteTags();
+            wts.ForEach(tag =>
+            {
+                Tags.Add(tag);
+            });
+            ws.ForEach(site =>
+            {
+                site.Tags = wts;
+                Sites.Add(site);
+            });
+        }
+
+        public List<WebSiteItem> ReadWebSiteItems()
+        {
+
+            var fPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian", "WebSiteItems.json");
+            if (!File.Exists(fPath))
+            {
+                throw new FileNotFoundException($"JSON file not found: {fPath}");
+            }
+            string jsonContent = File.ReadAllText(fPath);
+            if (string.IsNullOrEmpty(jsonContent))
+            {
+                return new List<WebSiteItem>();
+            }
+            var webSiteItems = System.Text.Json.JsonSerializer.Deserialize<List<WebSiteItem>>(jsonContent);
+            return webSiteItems;
+        }
+
+        public List<WebSiteTag> ReadWebSiteTags()
+        {
+
+            var fPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian", "WebSiteTag.json");
+            if (!File.Exists(fPath))
+            {
+                throw new FileNotFoundException($"JSON file not found: {fPath}");
+            }
+            string jsonContent = File.ReadAllText(fPath);
+            if (string.IsNullOrEmpty(jsonContent))
+            {
+                return new List<WebSiteTag>();
+            }
+            var webSiteTags = System.Text.Json.JsonSerializer.Deserialize<List<WebSiteTag>>(jsonContent);
+            return webSiteTags;
+        }
+        #endregion
     }
 }

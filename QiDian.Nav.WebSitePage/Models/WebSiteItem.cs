@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,12 @@ namespace QiDian.Nav.WebSitePage.Models
         public string Description { get; }
         public string Icon { get; }
 
+        /// <summary>快捷直达标签（普通站点为空，抽屉不展示该区块）</summary>
+        public List<WebSiteTag> Tags { get; set; } = new List<WebSiteTag>();
+
+        /// <summary>站点类型（暂不影响布局，仅作数据标记保留）</summary>
+        public WebType Type { get; set; } = WebType.普通;
+
         public WebSiteItem(string name, string url, string description, string icon)
         {
             Name = name;
@@ -21,5 +27,11 @@ namespace QiDian.Nav.WebSitePage.Models
             Description = description;
             Icon = icon;
         }
+    }
+
+    public enum WebType
+    {
+        特殊 = 1,
+        普通 = 2
     }
 }

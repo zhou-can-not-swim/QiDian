@@ -5,6 +5,40 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="340">
+    <UserControl.Resources>
+        <!-- 直达标签的胶囊按钮样式 -->
+        <Style x:Key="TagChipStyle" TargetType="Button">
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{DynamicResource CardBackgroundBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="13"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavSelectedBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -34,8 +68,8 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
-                <TextBlock Text="{Binding Icon}" FontSize="26" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="Bold"
+                <TextBlock Text="{Binding Site.Icon}" FontSize="26" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Site.Name}" FontSize="17" FontWeight="Bold"
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            Margin="12,0,8,0" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"/>
@@ -45,12 +79,14 @@
         <!-- ===== 详情区 ===== -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="20,18,20,0">
+            <StackPanel Margin="20,18,20,20">
+
+                <!-- 链接 -->
                 <TextBlock Text="链接" FontSize="12"
                            Foreground="{DynamicResource TextMutedBrush}"/>
-                <TextBox Text="{Binding Url, Mode=OneWay}"
+                <TextBox Text="{Binding Site.Url, Mode=OneWay}"
                          IsReadOnly="True"
-                         Padding="8" Margin="0,6,0,20"
+                         Padding="8" Margin="0,6,0,18"
                          Background="{DynamicResource SurfaceBrush}"
                          BorderBrush="{DynamicResource BorderBrush}"
                          BorderThickness="1"
@@ -59,37 +95,86 @@
                          VerticalContentAlignment="Center"
                          TextWrapping="NoWrap"/>
 
+                <!-- 简介 -->
                 <TextBlock Text="简介" FontSize="12"
                            Foreground="{DynamicResource TextMutedBrush}"/>
-                <TextBlock Text="{Binding Description}" FontSize="13"
+                <TextBlock Text="{Binding Site.Description}" FontSize="13"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            Margin="0,6,0,0" TextWrapping="Wrap"
                            LineHeight="20"/>
+
+                <!-- 快捷入口（仅站点配置了直达标签时展示） -->
+                <StackPanel Margin="0,16,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasTags}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <TextBlock Text="快捷入口" FontSize="12"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                    <TextBlock Text="点击直达：将在链接后拼接关键词跳转"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               Margin="0,4,0,0" TextWrapping="Wrap"/>
+
+                    <ItemsControl ItemsSource="{Binding Site.Tags}" Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource TagChipStyle}"
+                                        Content="{Binding Name}"
+                                        Command="{Binding DataContext.OpenTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
 
         <!-- ===== 底部：打开按钮 ===== -->
-        <Button Grid.Row="2" Click="Open_Click" Cursor="Hand"
+        <Button Grid.Row="2"
+                Command="{Binding OpenSiteCommand}"
                 Content="用浏览器打开"
-                Height="38" Margin="20,14,20,20"
-                Background="{DynamicResource PrimaryBrush}"
+                Height="38" Margin="20,10,20,20"
+                Background="{DynamicResource PinkBrush}"
                 Foreground="White" FontSize="14" FontWeight="SemiBold"
                 BorderThickness="0">
-            <Button.Template>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{DynamicResource PrimaryBrush}" CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.75"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Button.Template>
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Bd" Property="Opacity" Value="0.75"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Button.Style>
         </Button>
     </Grid>
 </UserControl>

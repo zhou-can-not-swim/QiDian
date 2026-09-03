@@ -32,5 +32,6 @@
     <SolidColorBrush x:Key="NavIconBrush" Color="{StaticResource NavIconColor}"/>
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
     <SolidColorBrush x:Key="SuccessBgBrush" Color="{StaticResource SuccessBgColor}"/>
+    <SolidColorBrush x:Key="PinkBrush" Color="LightPink"/>
 
 </ResourceDictionary>
