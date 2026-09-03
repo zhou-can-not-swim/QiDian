@@ -8,12 +8,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Content Include="ZhouLib.dll">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\QiDian.Contracts\QiDian.Contracts.csproj" />
 	</ItemGroup>
 

@@ -22,6 +22,19 @@
 		<PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<COMReference Include="IWshRuntimeLibrary">
+			<WrapperTool>tlbimp</WrapperTool>
+			<VersionMinor>0</VersionMinor>
+			<VersionMajor>1</VersionMajor>
+			<Guid>f935dc20-1cf0-11d0-adb9-00c04fd58a0b</Guid>
+			<Lcid>0</Lcid>
+			<Isolated>false</Isolated>
+			<EmbedInteropTypes>true</EmbedInteropTypes>
+		</COMReference>
+	</ItemGroup>
+
+
 	<!-- 共享契约类库 -->
 	<ItemGroup>
 		<ProjectReference Include="..\QiDian.Contracts\QiDian.Contracts.csproj" />
@@ -33,35 +46,27 @@
 	</ItemGroup>
 
 
-	<!--使用第三方库-->
+	<!--引用第三方库-->
 	<ItemGroup>
 		<Reference Include="Zhou.CrawlerAdapter">
 			<HintPath>bin\Debug\net8.0-windows\Zhou.CrawlerAdapter.dll</HintPath>
 		</Reference>
-	</ItemGroup>
 
-	<ItemGroup>
 		<Reference Include="Zhou.LevelDB">
 			<HintPath>bin\Debug\net8.0-windows\Zhou.LevelDB.dll</HintPath>
 		</Reference>
+
+		<Reference Include="ZhouLib">
+			<HintPath>bin\Debug\net8.0-windows\ZhouLib.dll</HintPath>
+		</Reference>
 	</ItemGroup>
+
 
 	<!-- 复制到输出目录 -->
 	<ItemGroup>
 		<Content Include="Resources\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-	</ItemGroup>
-	<ItemGroup>
-	  <COMReference Include="IWshRuntimeLibrary">
-	    <WrapperTool>tlbimp</WrapperTool>
-	    <VersionMinor>0</VersionMinor>
-	    <VersionMajor>1</VersionMajor>
-	    <Guid>f935dc20-1cf0-11d0-adb9-00c04fd58a0b</Guid>
-	    <Lcid>0</Lcid>
-	    <Isolated>false</Isolated>
-	    <EmbedInteropTypes>true</EmbedInteropTypes>
-	  </COMReference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -74,6 +79,10 @@
 		</Content>
 
 		<Content Include="Zhou.CrawlerAdapter.dll" Condition="Exists('Zhou.CrawlerAdapter.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+
+		<Content Include="ZhouLib.dll" Condition="Exists('ZhouLib.dll')">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
