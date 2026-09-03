@@ -6,26 +6,23 @@ using System.Threading.Tasks;
 
 namespace QiDian.Nav.WebSitePage.Models
 {
-    /// <summary>单个精选网站条目（父 → 抽屉子控件之间传递的数据单元）</summary>
     public sealed class WebSiteItem
     {
-        public string Name { get; }
-        public string Url { get; }
-        public string Description { get; }
-        public string Icon { get; }
+        public string Name { get; set; }
+        public string Url { get; set; }
+        public string Description { get; set; }
+        public string SearchUrl { get; set; }
 
-        /// <summary>快捷直达标签（普通站点为空，抽屉不展示该区块）</summary>
         public List<WebSiteTag> Tags { get; set; } = new List<WebSiteTag>();
-
-        /// <summary>站点类型（暂不影响布局，仅作数据标记保留）</summary>
         public WebType Type { get; set; } = WebType.普通;
 
-        public WebSiteItem(string name, string url, string description, string icon)
+        public WebSiteItem(string name, string url, string description, string searchUrl)
         {
             Name = name;
             Url = url;
             Description = description;
-            Icon = icon;
+            SearchUrl = searchUrl;
+
         }
     }
 

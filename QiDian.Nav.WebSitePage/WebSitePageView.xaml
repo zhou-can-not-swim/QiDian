@@ -229,7 +229,7 @@
                                      CloseRequested="DetailView_CloseRequested"/>
         </Border>
 
-        <!-- ============ 新增网站弹窗（覆盖式模态，置于最上层） ============ -->
+        <!-- ============ 新增网站弹窗============ -->
         <Grid x:Name="AddSiteLayer"
               Visibility="Collapsed"
               Opacity="0"
@@ -273,6 +273,11 @@
                     <TextBlock Text="网址" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
                     <TextBox Style="{StaticResource AddDialogInput}"
                              Text="{Binding NewUrl, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- searchUrl -->
+                    <TextBlock Text="搜索网址" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
+                    <TextBox Style="{StaticResource AddDialogInput}"
+                             Text="{Binding NewSearchUrl, UpdateSourceTrigger=PropertyChanged}"/>
+                    
 
                     <!-- 简介 -->
                     <TextBlock Text="简介" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
@@ -282,11 +287,6 @@
                              MinHeight="72" MaxHeight="160"
                              VerticalContentAlignment="Top"
                              VerticalScrollBarVisibility="Auto"/>
-
-                    <!-- 图标 -->
-                    <TextBlock Text="图标" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
-                    <TextBox Style="{StaticResource AddDialogInput}"
-                             Text="{Binding NewIcon, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- 底部按钮 -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
@@ -305,7 +305,7 @@
             </Border>
         </Grid>
 
-        <!-- ============ 新增标签弹窗（覆盖式模态，置于最上层） ============ -->
+        <!-- ============ 新增标签弹窗 ============ -->
         <Grid x:Name="AddTagLayer"
               Visibility="Collapsed"
               Opacity="0"
@@ -344,11 +344,6 @@
                     <TextBox x:Name="NewTagNameBox"
                              Style="{StaticResource AddDialogInput}"
                              Text="{Binding NewTagName, UpdateSourceTrigger=PropertyChanged}"/>
-
-                    <!-- 关键词（留空则用名称拼接） -->
-                    <TextBlock Text="关键词" Style="{StaticResource AddDialogLabel}" Margin="0,14,0,6"/>
-                    <TextBox Style="{StaticResource AddDialogInput}"
-                             Text="{Binding NewTagKeyword, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- 底部按钮 -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">

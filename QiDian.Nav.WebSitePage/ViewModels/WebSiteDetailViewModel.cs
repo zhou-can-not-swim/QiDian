@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Reactive;
 using System.Windows;
+using ZhouLib;
 
 namespace QiDian.Nav.WebSitePage.ViewModels
 {
@@ -35,12 +36,14 @@ namespace QiDian.Nav.WebSitePage.ViewModels
 
         private void OpenTag(WebSiteTag tag)
         {
-            throw new NotImplementedException();
+            var b = new BrowserMethod();
+            b.OpenBrowserInPrivateMode(Site?.SearchUrl + tag.Name);
         }
 
         private void OpenUrl(string? url)
         {
-            throw new NotImplementedException();
+            var b = new BrowserMethod();
+            b.OpenBrowserInPrivateMode(url);
         }
     }
 }

@@ -16,7 +16,6 @@ namespace QiDian.Nav.WebSitePage
     {
         /// <summary>抽屉宽度（px），与 XAML 中 DrawerHost.Width 保持一致</summary>
         private const double DrawerWidth = 340;
-
         private WebSitePageViewModel? _attachedVm;
 
 
@@ -25,7 +24,6 @@ namespace QiDian.Nav.WebSitePage
             InitializeComponent();
         }
 
-        /// <summary>点击列表（含重复点击已选项）：始终让抽屉滑出</summary>
         private void SiteList_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (ViewModel == null) return;
@@ -36,7 +34,6 @@ namespace QiDian.Nav.WebSitePage
             }
         }
 
-        /// <summary>抽屉子控件请求关闭</summary>
         private void DetailView_CloseRequested(object? sender, EventArgs e)
         {
             ViewModel?.CloseDrawer();
