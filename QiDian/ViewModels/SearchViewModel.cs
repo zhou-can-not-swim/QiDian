@@ -8,6 +8,7 @@ using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -155,36 +156,53 @@ namespace QiDian
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = SelectedFile.TruePath??SelectedFile.FullPath,
-                    UseShellExecute = true  // 使用系统默认方式打开
+                    FileName = SelectedFile.TruePath ?? SelectedFile.FullPath,
+                    UseShellExecute = true
                 });
+            }
+            catch (Win32Exception ex)
+            {
+                using (var scope = AppServiceLocator.ServiceProvider!.CreateScope())
+                {
+                    var ldb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
+                    ldb.Delete($"st_{SelectedFile.FileName}");
+                }
+                return;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"打开失败: {ex.Message}", "错误");
+                return;
+            }
+
+            try {
 
                 using (var scope = AppServiceLocator.ServiceProvider!.CreateScope())
                 {
                     var ldb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
                     var f = new FileEntry
                     {
-                        FullPath= SelectedFile.FullPath,
-                        FileName1= SelectedFile.FileName1,
-                        TruePath= SelectedFile.TruePath,
-                        Score = SelectedFile.Score+10,
-                        UsageCount= SelectedFile.UsageCount++,
-                        
+                        FullPath = SelectedFile.FullPath,
+                        FileName1 = SelectedFile.FileName1,
+                        TruePath = SelectedFile.TruePath,
+                        Score = SelectedFile.Score + 10,
+                        UsageCount = SelectedFile.UsageCount++,
+
                     };
 
                     ldb.Put($"st_{SelectedFile.FileName}", JsonSerializer.Serialize(f));
                 }
-                RxApp.MainThreadScheduler.Schedule(() =>
-                {
-
-                });
-
-
+                return;
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-                MessageBox.Show($"打开失败: {ex.Message}", "错误");
+                MessageBox.Show($"数据库更新失败: {ex.Message}", "错误");
+                return;
             }
+
+
+
+
         }
         public void OpenFile()
         {
