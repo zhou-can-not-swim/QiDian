@@ -125,10 +125,6 @@ namespace QiDian
             //CopyPathCommand = ReactiveCommand.Create(CopySelectedPath);
             //RunAsAdminCommand = ReactiveCommand.Create(RunSelectedAsAdmin);
 
-            // 预加载第一层数据：窗口显示前 RecentItems 已就绪，避免打开后有空白等待
-            SearchRecent("");
-            RebuildRecentItems();
-
             this.WhenAnyValue(x => x.SearchKeyword)
                .Throttle(new TimeSpan(100))
                .ObserveOn(RxApp.TaskpoolScheduler)
