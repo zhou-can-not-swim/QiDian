@@ -308,9 +308,9 @@ namespace QiDian
             int start = IsRecentExpanded ? _recentPageIndex * RecentPageSize : 0;   //0
             int count = Math.Min(pageSize, Math.Max(0, _recentAll.Count - start)); //pageSize 27
 
-            RecentItems.Clear();
+            var page = new List<FileEntry>(pageSize);
             for (int i = 0; i < count; i++)
-                RecentItems.Add(_recentAll[start + i]);
+                page.Add(_recentAll[start + i]);
 
             // 展开时固定渲染 27 格（3行×9列）：数据不足用占位项补齐，
             // 保证翻到末页只剩几个文件时布局也不会塌缩成一行。
@@ -318,8 +318,10 @@ namespace QiDian
             if (IsRecentExpanded && _recentAll.Count > 0)
             {
                 for (int i = count; i < pageSize; i++)
-                    RecentItems.Add(PlaceholderEntry);
+                    page.Add(PlaceholderEntry);
             }
+
+            RecentItems = new ObservableCollection<FileEntry>(page);
         }
 
 

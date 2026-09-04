@@ -60,6 +60,8 @@ namespace QiDian.Services.SearchLogic
                 .Where(u => System.IO.Path.GetExtension(u.Value.TruePath) == ".exe" ? true : false)
                 .Where(u=>!(u.Value.FileName.StartsWith("卸载")|| 
                           u.Value.FileName1.StartsWith("卸载") ||
+                          u.Value.FileName.StartsWith("uninstall",StringComparison.OrdinalIgnoreCase) ||
+                          u.Value.FileName1.StartsWith("uninstall", StringComparison.OrdinalIgnoreCase) ||
                           u.Value.TruePath.StartsWith(
                               Environment.GetFolderPath(Environment.SpecialFolder.Windows),
                               StringComparison.OrdinalIgnoreCase)))
