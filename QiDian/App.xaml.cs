@@ -9,6 +9,7 @@ using QiDian.ViewModels;
 using Zhou.CrawlerAdapter.DependencyInjection;
 using Zhou.LevelDB.DependencyInjection;
 using QiDian.Services.SearchLogic;
+using QiDian.BackGroundServices;
 
 namespace QiDian
 {
@@ -35,6 +36,8 @@ namespace QiDian
 
                     //第三方自定义库
                     ConfigureThirdpartyServices(services);
+
+                    AddBackGroundServices(services);
 
                     // 注册插件：模块单例 + View/ViewModel 瞬态
                     foreach (var m in modules)
@@ -176,6 +179,12 @@ namespace QiDian
                 options.DirName = "QiDian";
                 options.DatabaseName = "qidian";
             });
+        }
+
+        //后台服务
+        private void AddBackGroundServices(IServiceCollection services)
+        {
+            services.AddHostedService<ExecuteEverythingService>();
         }
 
         protected override async void OnExit(ExitEventArgs e)

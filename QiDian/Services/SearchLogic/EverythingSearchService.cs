@@ -36,16 +36,12 @@ namespace QiDian.Services.SearchLogic
         [DllImport("Everything64.dll")]
         private static extern bool Everything_GetResultDateModified(int nIndex, out long lpDateModified);
 
-        public static void RecordUserChoice(string key, string fullPath)
-        {
-            if (string.IsNullOrWhiteSpace(fullPath)) return;
-        }
 
-        private static bool? _available;
+        private bool _available;
 
-        public static bool IsAvailable()
+        public bool IsAvailable()
         {
-            if (_available.HasValue) return _available.Value;
+            if (_available) return _available;
             try
             {
                 Everything_SetSearchW("");
@@ -55,7 +51,7 @@ namespace QiDian.Services.SearchLogic
             {
                 _available = false;
             }
-            return _available.Value;
+            return _available;
         }
 
         public List<FileEntry> Search(string keyword, int maxResults = 3*27)
