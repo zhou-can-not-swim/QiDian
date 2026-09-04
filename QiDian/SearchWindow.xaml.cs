@@ -65,11 +65,6 @@ namespace QiDian
             _viewModel.ToggleRecentExpanded();
         }
 
-        private void FixedHeader_Click(object sender, RoutedEventArgs e)
-        {
-            _viewModel.IsFixedExpanded = !_viewModel.IsFixedExpanded;
-        }
-
         private void RecentListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // 更新 ViewModel 的选中项（第一层）

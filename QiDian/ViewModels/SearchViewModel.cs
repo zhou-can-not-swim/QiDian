@@ -37,17 +37,9 @@ namespace QiDian
         [Reactive]
         public ObservableCollection<FileEntry> RecentItems { get; set; } = new();
 
-        //预留
-        [Reactive]
-        public ObservableCollection<FixedEntry> FixedItems { get; set; } = new();
-
         /// <summary>第一层是否展开（默认折叠）</summary>
         [Reactive]
         public bool IsRecentExpanded { get; set; }
-
-        /// <summary>第二层是否展开（默认折叠）</summary>
-        [Reactive]
-        public bool IsFixedExpanded { get; set; }
 
         /// <summary>是否已执行过搜索（区分「未搜索」与「搜索无结果」两种界面状态）</summary>
         [Reactive]
@@ -66,20 +58,6 @@ namespace QiDian
         public ReactiveCommand<Unit, Unit> CopyPathCommand { get; }
         public ReactiveCommand<Unit, Unit> RunAsAdminCommand { get; }
 
-        /// <summary>第二层预留入口的占位模型</summary>
-        public sealed class FixedEntry
-        {
-            public FixedEntry(string name, string emoji, string description)
-            {
-                Name = name;
-                Emoji = emoji;
-                Description = description;
-            }
-
-            public string Name { get; }
-            public string Emoji { get; }
-            public string Description { get; }
-        }
 
         private const int RecentRowCapacity = 9;
         private const int RecentExpandedRows = 3;
@@ -107,18 +85,6 @@ namespace QiDian
         {
             _everything = everything;
             UnionSearchService.DataTransOk += UnionSearchService_DataTransOk;
-            // 第二层：预留固定内容（演示占位，后续自行替换）
-            FixedItems = new ObservableCollection<FixedEntry>
-            {
-                new("设置", "⚙️", "打开应用设置"),
-                new("剪贴板历史", "📋", "最近复制的文本与图片"),
-                new("翻译", "🌐", "输入文字快速翻译"),
-                new("取色器", "🎨", "拾取屏幕任意颜色"),
-                new("插件中心", "🧩", "浏览并安装插件"),
-                new("文件快传", "📤", "跨设备传输文件"),
-                new("备忘录", "📝", "随手记录想法"),
-                new("二维码", "🔳", "生成/识别二维码"),
-            };
 
             // 初始化命令
             OpenFileCommand = ReactiveCommand.Create(OpenSelectedFile);
