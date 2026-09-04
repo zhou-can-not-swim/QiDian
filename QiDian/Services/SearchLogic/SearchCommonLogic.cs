@@ -33,7 +33,15 @@ namespace QiDian.Services.SearchLogic
                 WshShell shell = new WshShell();
                 IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(lnkFile);
                 string targetPath = shortcut.TargetPath;
-                return targetPath;
+                if (System.IO.File.Exists(targetPath))
+                {
+                    return targetPath; 
+                }
+                else
+                {
+
+                    return "";
+                }
             }
             catch(Exception ex)
             {
