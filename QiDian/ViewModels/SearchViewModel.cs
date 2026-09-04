@@ -133,6 +133,7 @@ namespace QiDian
                     var ldb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
                     ldb.Delete($"st_{SelectedFile.FileName}");
                 }
+                SearchKeyword = "";
                 return;
             }
             catch (Exception ex)
@@ -158,14 +159,15 @@ namespace QiDian
 
                     ldb.Put($"st_{SelectedFile.FileName}", JsonSerializer.Serialize(f));
                 }
-                return;
             }
             catch(Exception ex)
             {
                 MessageBox.Show($"数据库更新失败: {ex.Message}", "错误");
+                SearchKeyword = "";
                 return;
             }
 
+            SearchKeyword = "";
 
 
 

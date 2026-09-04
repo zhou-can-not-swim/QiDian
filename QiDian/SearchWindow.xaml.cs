@@ -43,6 +43,7 @@ namespace QiDian
         private void MainWindow_Activated(object sender, EventArgs e)
         {
             //窗口激活
+            SearchTextBox.Focus();
         }
 
         private void SearchWindow_Deactivated(object sender, EventArgs e)
