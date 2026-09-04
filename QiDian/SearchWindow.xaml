@@ -46,7 +46,7 @@
         <!-- 第一层：最近使用 横向卡片 -->
         <DataTemplate x:Key="RecentItemTemplate">
             <Border Width="76" Padding="4,6"
-                    ToolTip="{Binding FileName}">
+                    ToolTip="{Binding TruePath}">
                 <StackPanel>
                     <Border Width="45" Height="45" CornerRadius="12" Background="#EEF3FA" HorizontalAlignment="Center">
                         <Image Source="{Binding Icon, Converter={StaticResource FilePathToIconConverter}}"

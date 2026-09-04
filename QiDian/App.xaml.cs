@@ -173,7 +173,7 @@ namespace QiDian
             services.AddLevelDB(options =>
             {
                 options.UseAppData = true;
-                options.DirName = "ldb";
+                options.DirName = "QiDian";
                 options.DatabaseName = "qidian";
             });
         }

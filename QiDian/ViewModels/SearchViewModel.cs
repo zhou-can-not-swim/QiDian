@@ -105,6 +105,7 @@ namespace QiDian
         public SearchViewModel(EverythingSearchService everything)
         {
             _everything = everything;
+            UnionSearchService.DataTransOk += UnionSearchService_DataTransOk;
             // 第二层：预留固定内容（演示占位，后续自行替换）
             FixedItems = new ObservableCollection<FixedEntry>
             {
@@ -138,6 +139,15 @@ namespace QiDian
                .ObserveOn(RxApp.MainThreadScheduler)
                .Subscribe(searching => IsSearching = searching);
 
+        }
+
+        private void UnionSearchService_DataTransOk()
+        {
+            RxApp.MainThreadScheduler.Schedule(() =>
+            {
+                SearchRecent("");
+                RebuildRecentItems();
+            });
         }
 
         #region 打开文件
@@ -286,11 +296,6 @@ namespace QiDian
         {
             _recentPageIndex = 0;
             FillCurrentPage();
-
-            // 自动选中第一项，保证 Enter / 双击可直接打开（否则 SelectedItem 为 null 时无反应）
-            SelectedFile ??= RecentItems.FirstOrDefault();
-
-            // 后台线程异步提取图标（只处理当前页的项，不阻塞 UI）
             StartIconPrefetchAsync();
         }
 
@@ -317,27 +322,6 @@ namespace QiDian
             }
         }
 
-        /// <summary>
-        /// 翻页
-        /// </summary>
-        public void TurnPage(int delta)
-        {
-            if (!IsRecentExpanded || delta == 0) return;
-            if (_recentAll.Count <= RecentPageSize) return; // 一页能装下，无需翻页
-
-            int maxPage = (_recentAll.Count - 1) / RecentPageSize; // 最后一页索引
-            int newIndex = Math.Clamp(_recentPageIndex + delta, 0, maxPage);
-            if (newIndex == _recentPageIndex) return; // 已在首页/末页
-
-            _recentPageIndex = newIndex;
-            FillCurrentPage();
-
-            // 翻页后选中新页第一项，便于 Enter / 双击直接打开
-            SelectedFile = RecentItems.FirstOrDefault();
-
-            // 新页的图标异步提取（已提取过的项直接命中缓存）
-            StartIconPrefetchAsync();
-        }
 
          #region 提取图标
 
@@ -423,16 +407,33 @@ namespace QiDian
         }
 
         #endregion
+
+        //翻页
+        public void TurnPage(int delta)
+        {
+            if (!IsRecentExpanded || delta == 0) return;
+            if (_recentAll.Count <= RecentPageSize) return; // 一页能装下，无需翻页
+
+            int maxPage = (_recentAll.Count - 1) / RecentPageSize; // 最后一页索引
+            int newIndex = Math.Clamp(_recentPageIndex + delta, 0, maxPage);
+            if (newIndex == _recentPageIndex) return; // 已在首页/末页
+
+            _recentPageIndex = newIndex;
+            FillCurrentPage();
+
+            // 翻页后选中新页第一项，便于 Enter / 双击直接打开
+            SelectedFile = RecentItems.FirstOrDefault();
+
+            // 新页的图标异步提取（已提取过的项直接命中缓存）
+            StartIconPrefetchAsync();
+        }
+
         public void ToggleRecentExpanded()
         {
             IsRecentExpanded = !IsRecentExpanded;
             RebuildRecentItems();
         }
 
-
-
-
-       
 
         public void Dispose()
         {

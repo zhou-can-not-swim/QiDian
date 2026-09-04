@@ -21,6 +21,9 @@ namespace QiDian.Services.SearchLogic
         public static Dictionary<string, string> CommonStartMenuFiles;
         public static Dictionary<string, string> UserStartMenuFiles;
         public static Dictionary<string, FileEntry> UnionFiles;
+
+        public static event Action DataTransOk;
+
         public const string pre = "st";
         public UnionSearchService()
         {
@@ -55,6 +58,11 @@ namespace QiDian.Services.SearchLogic
                 .ToDictionary(kv => kv.Key, kv => new FileEntry() { FileName1 = kv.Key, FullPath = kv.Value, TruePath = SearchCommonLogic.ExeFilePath(kv.Value), Score = 0 ,UsageCount=0})
                 .Where(u => !string.IsNullOrEmpty(u.Value.TruePath))
                 .Where(u => System.IO.Path.GetExtension(u.Value.TruePath) == ".exe" ? true : false)
+                .Where(u=>!(u.Value.FileName.StartsWith("卸载")|| 
+                          u.Value.FileName1.StartsWith("卸载") ||
+                          u.Value.TruePath.StartsWith(
+                              Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                              StringComparison.OrdinalIgnoreCase)))
                 .ToDictionary();
 
             UnionSearchService.UnionMenuWithDB();
@@ -83,6 +91,7 @@ namespace QiDian.Services.SearchLogic
                         batch.Put($"st_{kvp.Key}", jsonValue);
                     }
                 });
+                DataTransOk?.Invoke();
             }
         }
     }
