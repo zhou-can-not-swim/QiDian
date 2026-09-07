@@ -120,6 +120,7 @@ namespace QiDian
             if (SelectedFile == null || string.IsNullOrEmpty(SelectedFile.FullPath)) return;
             try
             {
+                var FileNamexx = SelectedFile.TruePath ?? SelectedFile.FullPath;
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = SelectedFile.TruePath ?? SelectedFile.FullPath,
