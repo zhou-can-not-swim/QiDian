@@ -125,6 +125,7 @@ namespace QiDian
                     FileName = SelectedFile.TruePath ?? SelectedFile.FullPath,
                     UseShellExecute = true
                 });
+
             }
             catch (Win32Exception ex)
             {
@@ -133,7 +134,7 @@ namespace QiDian
                     var ldb = scope.ServiceProvider.GetRequiredService<ILevelDBService>();
                     ldb.Delete($"st_{SelectedFile.FileName}");
                 }
-                SearchKeyword = "";
+                ResetSearchOnUiThread();
                 return;
             }
             catch (Exception ex)
@@ -156,18 +157,18 @@ namespace QiDian
                         UsageCount = SelectedFile.UsageCount++,
 
                     };
-
+                    
                     ldb.Put($"st_{SelectedFile.FileName}", JsonSerializer.Serialize(f));
                 }
             }
             catch(Exception ex)
             {
                 MessageBox.Show($"数据库更新失败: {ex.Message}", "错误");
-                SearchKeyword = "";
+                ResetSearchOnUiThread();
                 return;
             }
 
-            SearchKeyword = "";
+            ResetSearchOnUiThread();
 
 
 
@@ -175,6 +176,16 @@ namespace QiDian
         public void OpenFile()
         {
             Task.Run(()=> OpenSelectedFile());
+        }
+
+        /// <summary>
+        /// 在 UI 线程清空搜索框。
+        /// SearchKeyword 被 ReactiveUI Bind 到 SearchTextBox，禁止在后台线程直接修改，
+        /// 否则 ReactiveUI 会在后台线程回写 UI 控件 → 跨线程 InvalidOperationException。
+        /// </summary>
+        private void ResetSearchOnUiThread()
+        {
+            RxApp.MainThreadScheduler.Schedule(() => SearchKeyword = "");
         }
         #endregion
 
