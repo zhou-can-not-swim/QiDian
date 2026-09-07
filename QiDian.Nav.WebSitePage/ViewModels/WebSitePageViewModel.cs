@@ -8,11 +8,16 @@ using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Security.Policy;
+using System.Windows.Shapes;
+using Zhou.Security;
 
 namespace QiDian.Nav.WebSitePage.ViewModels
 {
     public class WebSitePageViewModel : ViewModelBase
     { 
+        public string fileName1Path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian", "WebSiteItems.enc");
+        public string fileName2Path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian", "WebSiteTags.enc");
+
         public ObservableCollection<WebSiteItem> Sites { get; } = new();
         public ObservableCollection<WebSiteTag> Tags { get; } = new();
 
@@ -27,9 +32,13 @@ namespace QiDian.Nav.WebSitePage.ViewModels
         public ReactiveCommand<Unit, Unit> AddWebSiteItem { get; }//打开网页
         public ReactiveCommand<Unit, Unit> AddWebSiteTag { get; }//打开新增标签弹窗
 
-        public WebSitePageViewModel()
+        private IJsonEncryptionService _json;
+
+
+        public WebSitePageViewModel(IJsonEncryptionService jsonED)
         {
             Detail = new WebSiteDetailViewModel();
+            _json = jsonED;
             InitDatas();
 
             this.WhenAnyValue(x => x.SelectedSite)
@@ -171,8 +180,20 @@ namespace QiDian.Nav.WebSitePage.ViewModels
 
         private void InitDatas()
         {
-            List<WebSiteItem> ws = ReadWebSiteItems();
-            List<WebSiteTag> wts = ReadWebSiteTags();
+            
+            if (!File.Exists(fileName1Path))
+            {
+                File.Create(fileName1Path).Close();
+            }
+
+
+            if (!File.Exists(fileName2Path))
+            {
+                File.Create(fileName2Path).Close();
+            }
+
+            List<WebSiteItem> ws = ReadWebSiteItems() ?? new List<WebSiteItem>();
+            List<WebSiteTag> wts = ReadWebSiteTags() ?? new List<WebSiteTag>();
             wts.ForEach(tag =>
             {
                 Tags.Add(tag);
@@ -187,34 +208,17 @@ namespace QiDian.Nav.WebSitePage.ViewModels
         public List<WebSiteItem> ReadWebSiteItems()
         {
 
-            var fPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian", "WebSiteItems.json");
-            if (!File.Exists(fPath))
-            {
-                throw new FileNotFoundException($"JSON file not found: {fPath}");
-            }
-            string jsonContent = File.ReadAllText(fPath);
-            if (string.IsNullOrEmpty(jsonContent))
-            {
-                return new List<WebSiteItem>();
-            }
-            var webSiteItems = System.Text.Json.JsonSerializer.Deserialize<List<WebSiteItem>>(jsonContent);
+            var fPath = fileName1Path;
+            var webSiteItems = _json.DecryptFromFile<List<WebSiteItem>>(fPath);
             return webSiteItems;
         }
 
         public List<WebSiteTag> ReadWebSiteTags()
         {
 
-            var fPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian", "WebSiteTag.json");
-            if (!File.Exists(fPath))
-            {
-                throw new FileNotFoundException($"JSON file not found: {fPath}");
-            }
-            string jsonContent = File.ReadAllText(fPath);
-            if (string.IsNullOrEmpty(jsonContent))
-            {
-                return new List<WebSiteTag>();
-            }
-            var webSiteTags = System.Text.Json.JsonSerializer.Deserialize<List<WebSiteTag>>(jsonContent);
+            var fPath = fileName2Path;
+            
+            var webSiteTags = _json.DecryptFromFile<List<WebSiteTag>>(fPath);
             return webSiteTags;
         }
         #endregion
@@ -222,23 +226,16 @@ namespace QiDian.Nav.WebSitePage.ViewModels
         #region 写文件
         public void SaveWebSiteItems()
         {
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian");
-            Directory.CreateDirectory(dir);
-            var fPath = Path.Combine(dir, "WebSiteItems.json");
-            string json = System.Text.Json.JsonSerializer.Serialize(Sites.ToList(),
-                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(fPath, json);
+            var fPath = fileName1Path;
+            _json.EncryptToFile(Sites.ToList(), fPath);
         }
 
         public void SaveWebSiteTags()
         {
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QiDian");
-            Directory.CreateDirectory(dir);
-            var fPath = Path.Combine(dir, "WebSiteTag.json");
-            string json = System.Text.Json.JsonSerializer.Serialize(Tags.ToList(),
-                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(fPath, json);
+            var fPath = fileName2Path;
+            _json.EncryptToFile(Tags.ToList(), fPath);
         }
         #endregion
+
     }
 }

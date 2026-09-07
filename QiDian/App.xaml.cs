@@ -10,6 +10,7 @@ using Zhou.CrawlerAdapter.DependencyInjection;
 using Zhou.LevelDB.DependencyInjection;
 using QiDian.Services.SearchLogic;
 using QiDian.BackGroundServices;
+using Zhou.Security.DependencyInjection;
 
 namespace QiDian
 {
@@ -178,6 +179,13 @@ namespace QiDian
                 options.UseAppData = true;
                 options.DirName = "QiDian";
                 options.DatabaseName = "qidian";
+            });
+
+            services.AddJsonEncryption(options =>
+            {
+
+                options.EnvironmentVariableName = "QIDIAN_ENCRYPTION_KEY";
+                options.KeySource = Zhou.Security.Configuration.KeySource.EnvironmentVariable;
             });
         }
 

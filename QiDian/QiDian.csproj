@@ -59,6 +59,10 @@
 		<Reference Include="ZhouLib">
 			<HintPath>bin\Debug\net8.0-windows\ZhouLib.dll</HintPath>
 		</Reference>
+
+		<Reference Include="Zhou.Security">
+			<HintPath>bin\Debug\net8.0-windows\Zhou.Security.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 
@@ -83,6 +87,10 @@
 		</Content>
 
 		<Content Include="ZhouLib.dll" Condition="Exists('ZhouLib.dll')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+
+		<Content Include="Zhou.Security.dll" Condition="Exists('Zhou.Security.dll')">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
