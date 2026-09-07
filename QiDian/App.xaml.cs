@@ -78,7 +78,7 @@ namespace QiDian
         private void InitializeTrayIcon()
         {
             var iconPath = System.IO.Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory, "Resources", "tray_icon.ico");
+                AppDomain.CurrentDomain.BaseDirectory, "Resources", "qidian_tray.ico");
 
             _notifyIcon = new TaskbarIcon
             {

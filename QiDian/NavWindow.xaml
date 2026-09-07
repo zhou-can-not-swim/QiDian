@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="QiDian" Height="680" Width="1100"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource BackgroundBrush}">
+        Background="{DynamicResource BackgroundBrush}"
+        Icon="Resources/qidian_nav.png">
 
     <Window.Resources>
         <common:ViewModelToViewConverter x:Key="VmToViewConverter"/>

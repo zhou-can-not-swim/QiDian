@@ -14,7 +14,8 @@
         Background="Transparent"
         Topmost="True"
         WindowStartupLocation="CenterScreen"
-        Deactivated="SearchWindow_Deactivated">
+        Deactivated="SearchWindow_Deactivated"
+        Icon="Resources/qidian_search.png">
     <Window.Resources>
         <local:FilePathToIconConverter x:Key="FilePathToIconConverter"/>
         <local:CollectionEmptyToVisibilityConverter x:Key="CollectionEmptyVisConv"/>
